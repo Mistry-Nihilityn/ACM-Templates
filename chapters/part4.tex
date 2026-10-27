@@ -1,0 +1,426 @@
+\part{字符串}
+
+\chapter{字符串}
+
+\section{哈希}
+\entrymeta{$O(1)$ 单次查询}
+使用 unsigned long long 的模 2\^{}64 自然溢出；反转等价类保存排序后的正反哈希二元组， 避免把两个哈希相乘导致的额外信息丢失。哈希仍有碰撞可能，不提供确定性判等保证。
+
+\subsection{P3498 {[}POI 2010{]} KOR-Beads}\label{p3498-poi-2010-kor-beads}
+
+
+
+
+
+
+\begin{codeline}
+#define N 200005
+#define BASE 200019
+class DeHash {
+public:
+    uint64 asc, rev;
+};
+inline bool operator<(const DeHash& A, const DeHash& B) {
+    if(A.asc != B.asc) {
+        return A.asc < B.asc;
+    } else {
+        return A.rev < B.rev;
+    }
+}
+inline bool operator==(const DeHash& A, const DeHash& B) {
+    return A.asc == B.asc && A.rev == B.rev || A.asc == B.rev && A.rev == B.asc;
+}
+DeHash de_hash[N];
+set<pair<uint64, uint64>> s;
+uint64 base[N];
+uint64 n;
+uint64 bead[N];
+/*
+ * 返回闭区间[l,r]子串的正反向哈希，反转后的字符串视为同类
+ */
+inline DeHash getSegHash(uint64 l, uint64 r) {
+    return {
+        de_hash[r].asc - de_hash[l - 1].asc * base[r - l + 1],
+        de_hash[l].rev - de_hash[r + 1].rev * base[r - l + 1]};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin >> n;
+    for(uint64 i = 1; i <= n; i++) {
+        cin >> bead[i];
+    }
+    base[0] = 1;
+    for(uint64 i = 1; i <= n; i++) {
+        base[i] = base[i - 1] * BASE;
+        de_hash[i].asc = de_hash[i - 1].asc * BASE + bead[i];
+        de_hash[n - i + 1].rev = de_hash[n - i + 2].rev * BASE + bead[n - i + 1];
+    }
+    vector<uint64> ans_k;
+    uint64 max_seg = 0, size;
+    DeHash tmp;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    for(uint64 i = 1; i <= n; i++) {
+        s.clear();
+
+        for(uint64 j = 1; j + i - 1 <= n; j += i) {
+            tmp = getSegHash(j, j + i - 1);
+            if(!s.count(minmax(tmp.asc, tmp.rev))) {
+                s.insert(minmax(tmp.asc, tmp.rev));
+            } else {
+            }
+        }
+        size = s.size();
+        if(size > max_seg) {
+            max_seg = size;
+            ans_k.clear();
+            ans_k.push_back(i);
+        } else if(size == max_seg) {
+            ans_k.push_back(i);
+        }
+    }
+    cout << (max_seg) << ' ' << (ans_k.size()) << '\n';
+    for(uint64 e : ans_k) {
+        cout << (e) << ' ';
+    }
+}
+\end{codeline}
+\begin{warnbox}
+双哈希降低碰撞；模数与底数取大质数。
+\end{warnbox}
+
+\section{KMP}
+\entrymeta{$O(n+m)$}
+\subsection{P3375 【模板】KMP}\label{p3375-ux6a21ux677fkmp}
+
+
+\begin{codeline}
+class KMP {
+public:
+    int n;
+    string pat;
+    vector<int> nxt;
+    /*
+     * 由模式串pat预处理失配数组
+     */
+    explicit KMP(const string& pat) : n(int(pat.size())), pat(pat) {
+        nxt.resize(n + 1);
+        nxt[0] = -1;
+        for(int i = 0, j = -1; i < n;) {
+            if(j == -1 || pat[i] == pat[j]) {
+                ++i;
+                ++j;
+                nxt[i] = j;
+            } else {
+                j = nxt[j];
+            }
+        }
+    }
+
+    /*
+     * 返回模式串在s中出现的所有起点，下标从0开始
+     */
+    vector<int> search(const string& s) const {
+        vector<int> ans;
+        int m = s.size();
+        if(n == 0) {
+            for(int i = 0; i <= m; i++) {
+                ans.push_back(i);
+            }
+            return ans;
+        }
+        for(int i = 0, j = 0; i < m;) {
+            if(j == -1 || s[i] == pat[j]) {
+                ++i;
+                ++j;
+                if(j == n) {
+                    ans.push_back(i - j);
+                    j = nxt[j];
+                }
+            } else {
+                j = nxt[j];
+            }
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        return ans;
+    }
+};
+\end{codeline}
+
+
+\subsection{P9770 {[}HUSTFC 2023{]} 逆 KMP}\label{p9770-hustfc-2023-ux9006-kmp}
+
+
+\begin{codeline}
+const int maxn = 200005;
+int ans[maxn], n, fa[maxn][18];
+int find(int x, int k) {
+    return fa[x][k] == x ? x : fa[x][k] = find(fa[x][k], k);
+}
+void merge(int x, int y, int k) {
+    x = find(x, k);
+    y = find(y, k);
+    if(x < y) {
+        swap(x, y);
+    }
+    if(x != y) {
+        fa[x][k] = y;
+    }
+}
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin >> n;
+    const int maxk = __lg(n);
+    for(int i = 1; i <= n; ++i) {
+        for(int k = 0; k <= maxk; ++k) {
+            fa[i][k] = i;
+        }
+    }
+    for(int i = 1, l1, r1, l2, r2; i <= n; ++i) {
+        int x;
+        cin >> x;
+        if(x) {
+            l1 = 1;
+            r1 = x;
+            l2 = i - x + 1;
+            r2 = i;
+            for(int k = maxk; ~k; --k) {
+                if(l1 + (1 << k) - 1 <= r1) {
+                    merge(l2, l1, k);
+                    l1 += 1 << k;
+                    l2 += 1 << k;
+                }
+            }
+        }
+    }
+    for(int k = maxk; k; --k) {
+        for(int i = 1; i + (1 << k) - 1 <= n; ++i) {
+            int pos = find(i, k);
+            merge(i, pos, k - 1);
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            merge(i + (1 << (k - 1)), pos + (1 << (k - 1)), k - 1);
+        }
+    }
+    int cnt = 0;
+    for(int i = 1; i <= n; ++i) {
+        if(find(i, 0) == i) {
+            ans[i] = ++cnt;
+        } else {
+            ans[i] = ans[find(i, 0)];
+        }
+    }
+    for(int i = 1; i <= n; ++i) {
+        cout << (ans[i]) << ' ';
+    }
+    return 0;
+}
+\end{codeline}
+\begin{warnbox}
+\texttt{nxt[0] = -1}；匹配成功后 \texttt{j = nxt[j]} 继续找重叠匹配。
+\end{warnbox}
+
+\section{AC 自动机}
+\entrymeta{$O(\sum|s|)$ 建树}
+\subsection{P5357 【模板】AC 自动机}\label{p5357-ux6a21ux677fac-ux81eaux52a8ux673a}
+
+
+\begin{codeline}
+class ACAutomaton {
+public:
+    class Node {
+    public:
+        int next[26]{}, fail = 0;
+    };
+    vector<Node> node{Node()};
+    vector<int> order;
+    bool built = false;
+    /*
+     * 清空自动机
+     */
+    void clear() {
+        node.assign(1, Node());
+        order.clear();
+        built = false;
+    }
+    /*
+     * 插入模式串s，返回终止节点编号
+     */
+    int insert(const string& s) {
+        int u = 0;
+        for(char c : s) {
+            int x = c - 'a';
+
+            if(!node[u].next[x]) {
+                int v = int(node.size());
+                node.emplace_back();
+                node[u].next[x] = v;
+            }
+            u = node[u].next[x];
+        }
+        return u;
+    }
+    /*
+     * 插入全部模式串后建立fail指针和转移
+     */
+    void build() {
+        if(built) {
+            return;
+        }
+        for(int v : node[0].next) {
+            if(v) {
+                order.push_back(v);
+            }
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        for(int i = 0; i < int(order.size()); i++) {
+            int u = order[i];
+            for(int c = 0; c < 26; c++) {
+                int v = node[u].next[c];
+                if(v) {
+                    node[v].fail = node[node[u].fail].next[c];
+                    order.push_back(v);
+                } else {
+                    node[u].next[c] = node[node[u].fail].next[c];
+                }
+            }
+        }
+        built = true;
+    }
+    /*
+     * 统计文本s中各节点对应模式串的出现次数，重复查询不累积
+     */
+    vector<long long> query(const string& s) const {
+        vector<long long> ans(node.size());
+        int u = 0;
+        for(char c : s) {
+            u = node[u].next[c - 'a'];
+            ans[u]++;
+        }
+        for(auto it = order.rbegin(); it != order.rend(); ++it) {
+            ans[node[*it].fail] += ans[*it];
+        }
+        return ans;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+先全部插入再 \texttt{build()}；fail 树上逆 BFS 累加。
+\end{warnbox}
+
+\section{后缀自动机}
+\entrymeta{$O(n)$}
+\subsection{题意翻译}\label{ux9898ux610fux7ffbux8bd1}
+
+输入两个字符串，输出它们的最长公共子串长度，若不存在公共子串则输出 0。
+
+
+\begin{codeline}
+class State {
+public:
+    int len{0}, link{0};
+    map<char, int> next;
+};
+
+class SuffixAutomaton {
+    vector<State> state;
+    int size{0}, last{0};
+
+public:
+    explicit SuffixAutomaton(int n = 0) {
+        init(n);
+    }
+
+    /*
+     * 清空自动机，n为预计字符串长度
+     */
+    void init(int n = 0) {
+        state.assign(1, State());
+        state.reserve(max(1, 2 * n));
+        state[0].link = -1;
+        size = 1;
+        last = 0;
+    }
+
+    /*
+     * 在当前字符串末尾加入字符c
+     */
+    void extend(char c) {
+        int cur = size++;
+        state.emplace_back();
+        state[cur].len = state[last].len + 1;
+        int p = last;
+        while(p != -1 && !state[p].next.count(c)) {
+            state[p].next[c] = cur;
+            p = state[p].link;
+        }
+        if(p == -1) {
+            state[cur].link = 0;
+        } else {
+            int q = state[p].next[c];
+            if(state[p].len + 1 == state[q].len) {
+                state[cur].link = q;
+            } else {
+                int clone = size++;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+                state.emplace_back();
+                state[clone].len = state[p].len + 1;
+                state[clone].next = state[q].next;
+                state[clone].link = state[q].link;
+                while(p != -1 && state[p].next[c] == q) {
+                    state[p].next[c] = clone;
+                    p = state[p].link;
+                }
+                state[q].link = state[cur].link = clone;
+            }
+        }
+        last = cur;
+    }
+
+    /*
+     * 返回两个字符串的一个最长公共子串，调用时重建自动机
+     */
+    string lcs(const string& string1, const string& string2) {
+        init(int(string1.size()));
+        for(char c : string1) {
+            extend(c);
+        }
+        int v = 0, l = 0, best = 0, bestpos = -1;
+        for(int i = 0; i < string2.size(); i++) {
+            while(v && !state[v].next.count(string2[i])) {
+                v = state[v].link;
+                l = state[v].len;
+            }
+            if(state[v].next.count(string2[i])) {
+                v = state[v].next[string2[i]];
+                l++;
+            }
+            if(l > best) {
+                best = l;
+                bestpos = i;
+            }
+        }
+        return string2.substr(bestpos - best + 1, best);
+    }
+
+};
+\end{codeline}
+
+
+\href{../examples/字符串/后缀自动机/01.cpp}{题目输入输出示例}（与正文组装后编译，正文不重复驱动代码）。
+
+\begin{warnbox}
+clone 节点完整复制转移与 link，再重定向。
+\end{warnbox}
+

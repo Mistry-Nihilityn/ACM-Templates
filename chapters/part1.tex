@@ -1,0 +1,4129 @@
+\part{基础数据结构}
+
+\chapter{并查集}
+
+\section{普通并查集}
+\entrymeta{$O(\alpha(n))$}
+带按秩合并（size）与路径压缩的并查集。下标从 1 开始，\texttt{init(n)} 后每个点自成一个集合。
+
+
+\begin{codeline}
+const int DSU_N = 100005;
+
+class DSUNode {
+public:
+    int fa;
+    int r;
+};
+
+class DSU {
+public:
+    DSUNode node[DSU_N];
+
+    /*
+     * 初始化编号1..maxn的独立集合
+     */
+    void init(int maxn) {
+        for(int i = 0; i <= maxn; i++) {
+            node[i] = {i, 1};
+        }
+    }
+
+    /*
+     * 查询u所在集合的代表元并压缩路径
+     */
+    int find(int u) {
+        return node[u].fa == u ? u : node[u].fa = find(node[u].fa);
+    }
+
+    /*
+     * 合并u、v所在集合，返回合并后的代表元
+     */
+    int join(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if(u != v) {
+            if(node[v].r == node[u].r) {
+                node[u].fa = v;
+                node[v].r++;
+            } else {
+                if(node[v].r < node[u].r) {
+                    swap(u, v);
+                }
+                node[u].fa = v;
+            }
+        }
+        return v;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    }
+};
+\end{codeline}
+\begin{warnbox}
+下标从 1 开始；\texttt{init(n)} 后每个点自成一个集合。
+\end{warnbox}
+
+\section{可持久化并查集}
+\entrymeta{$O(\log^2 n)$}
+\subsection{P3402 【模板】可持久化并查集}\label{p3402-ux6a21ux677fux53efux6301ux4e45ux5316ux5e76ux67e5ux96c6}
+
+
+\begin{codeline}
+class Data {
+public:
+    int fa = 0, dep = 0;
+};
+
+class PersistentDSU {
+public:
+    PersistentArray<Data> arr;
+    vector<int> version;
+    /*
+     * 查询版本ver中x所在集合的根信息
+     */
+    Data find(int ver, int x) const {
+        Data d = arr.query(version[ver], x);
+        while(d.fa != x) {
+            x = d.fa;
+            d = arr.query(version[ver], x);
+        }
+        return d;
+    }
+    /*
+     * 建立n个独立集合，初始版本为0
+     */
+    void init(int n, size_t capacity = 0) {
+        vector<Data> a(n + 1);
+        for(int i = 1; i <= n; i++) {
+            a[i].fa = i;
+        }
+        arr.build(a, capacity);
+        version.assign(1, 0);
+    }
+    /*
+     * 复制版本ver，返回新版本号
+     */
+    int copy(int ver) {
+        version.push_back(version[ver]);
+        return int(version.size()) - 1;
+    }
+    /*
+     * 基于版本ver合并x、y所在集合，返回新版本号
+     */
+    int merge(int ver, int x, int y) {
+        Data a = find(ver, x), b = find(ver, y);
+        int root = version[ver];
+        if(a.fa != b.fa) {
+            if(a.dep > b.dep) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+                swap(a, b);
+            }
+            root = arr.modify(root, a.fa, {b.fa, a.dep});
+            if(a.dep == b.dep) {
+                root = arr.modify(root, b.fa, {b.fa, b.dep + 1});
+            }
+        }
+        version.push_back(root);
+        return int(version.size()) - 1;
+    }
+    /*
+     * 判断版本ver中x、y是否属于同一集合
+     */
+    bool same(int ver, int x, int y) const {
+        return find(ver, x).fa == find(ver, y).fa;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+按秩合并、不路径压缩；回滚时把根指向旧版本根。
+\end{warnbox}
+
+\section{区间并查集}
+\entrymeta{$O((n+m)\log n\,\alpha(n))$}
+\begin{codeline}
+const int64 N = 100005;
+const int64 MODER = 1000000007;
+const int64 LOG_N = 20;
+int64 n, m;
+int64 lg[N];
+
+class Node {
+public:
+    int64 fa;
+    int64 w;
+};
+
+Node f[N][LOG_N];
+
+/*
+ * 返回以idx为起点、长度为2^log_gap的区间代表元
+ */
+int find_root(int64 idx, int64 log_gap) {
+    int root = idx;
+    while(f[root][log_gap].fa != -1) {
+        root = f[root][log_gap].fa;
+    }
+    while(idx != root) {
+        int fa = f[idx][log_gap].fa;
+        f[idx][log_gap].fa = root;
+        idx = fa;
+    }
+    return root;
+}
+
+/*
+ * 合并u、v为起点的两个等长区间
+ */
+void cat(int64 u, int64 v, int64 log_gap) {
+    if(u == -1 || v == -1 || u > n || v > n) {
+        return;
+    }
+
+    u = find_root(u, log_gap);
+    v = find_root(v, log_gap);
+    if(u != v) {
+        if(f[u][log_gap].w > f[v][log_gap].w) {
+            swap(u, v);
+        }
+        f[u][log_gap].fa = v;
+        f[v][log_gap].w += f[u][log_gap].w;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    }
+}
+
+void push_down(int idx, int log_gap) {
+    if(log_gap > 0 && f[idx][log_gap].fa != -1) {
+        cat(idx, f[idx][log_gap].fa, log_gap - 1);
+        cat(idx + (1 << (log_gap - 1)), f[idx][log_gap].fa + (1 << (log_gap - 1)), log_gap - 1);
+        f[idx][log_gap].fa = -1;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> m;
+
+    for(int i = 2; i <= n; i++) {
+        lg[i] = lg[i >> 1] + 1;
+    }
+
+    for(int i = 0; i <= n; i++) {
+        for(int j = 0; j <= lg[n]; j++) {
+            f[i][j].fa = -1;
+            f[i][j].w = 1;
+        }
+    }
+
+    int64 l, r, L, R, lag, gap;
+    while(m--) {
+        cin >> l >> r >> L >> R;
+
+        lag = r - l + 1;
+        gap = 1 << (lg[n] + 1);
+        while(gap) {
+            if(gap & lag) {
+                cat(l + ((lag - lag % gap) ^ gap), L + ((lag - lag % gap) ^ gap), lg[gap]);
+            }
+            gap >>= 1;
+        }
+    }
+    for(int j = lg[n]; j >= 0; j--) {
+        for(int i = 1; i + (1ll << j) - 1 <= n; i++) {
+            if(f[i][j].fa != -1) {
+                push_down(i, j);
+            }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+        }
+    }
+    int cnt = 0;
+
+    for(int i = 1; i <= n; i++) {
+        if(f[i][0].fa == -1) {
+            cnt++;
+        }
+    }
+
+    int64 res = 9;
+    cnt--;
+    for(int i = 0; i < cnt; i++) {
+        res = res * 10 % MODER;
+    }
+    cout << (res) << '\n';
+}
+\end{codeline}
+\begin{warnbox}
+倍增并查集：同一层内合并，向下传播。
+\end{warnbox}
+
+
+\chapter{树状数组}
+\entrymeta{$O(\log n)$}
+\begin{codeline}
+template <class Data = long long>
+class BIT {
+public:
+    vector<Data> arr;
+    int size = 0;
+    /*
+     * 初始化长度为n的树状数组
+     */
+    void init(int n) {
+        size = n;
+        arr.assign(n + 1, Data());
+    }
+    /*
+     * 在idx处加x，下标从1开始
+     */
+    void add(int idx, Data x) {
+        for(int i = idx; i <= size; i += lowBit(i)) {
+            arr[i] += x;
+        }
+    }
+    /*
+     * 查询前缀[1,r]的和，r=0时返回0
+     */
+    Data prefix(int r) const {
+        Data res{};
+        for(int i = r; i; i -= lowBit(i)) {
+            res += arr[i];
+        }
+        return res;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+下标从 1 开始；\texttt{prefix(0)} 返回幺元。
+\end{warnbox}
+
+
+\chapter{线段树}
+
+\section{一般线段树}
+\entrymeta{$O(\log n)$}
+\begin{codeline}
+
+class Data {
+public:
+    int64 sum = 0;
+    Data operator+(const Data& o) const {
+        return {sum + o.sum};
+    }
+};
+
+class Tag {
+public:
+    int64 add = 0, mul = 1;
+    // a + b：先执行 a，再执行 b。
+    Tag operator+(const Tag& o) const {
+        return {add * o.mul + o.add,
+                mul * o.mul};
+    }
+    Data apply(const Data& d, int l, int r) const {
+        return {d.sum * mul + add * (r - l + 1)};
+    }
+};
+\end{codeline}
+
+
+\subsection{通用实现}\label{ux901aux7528ux5b9eux73b0}
+
+下面的类不依赖上述示例；使用时提供自己的 \texttt{Data\ /\ Tag}，实例化 \texttt{SegmentTree\textless{}Data,\ Tag\textgreater{}}。
+
+
+\begin{codeline}
+template <class Value, class Tag>
+class SegmentTree {
+public:
+    class Node {
+    public:
+        Value data{};
+        Tag tag{};
+    };
+    int n = 0;
+    vector<Node> node;
+    void push_up(int u) {
+        node[u].data = node[u * 2].data + node[u * 2 + 1].data;
+    }
+    void apply(int u, int l, int r, const Tag& t) {
+        node[u].data = t.apply(node[u].data, l, r);
+        node[u].tag = node[u].tag + t;
+    }
+    void push_down(int u, int l, int r) {
+        int mid = l + (r - l) / 2;
+        apply(u * 2, l, mid, node[u].tag);
+        apply(u * 2 + 1, mid + 1, r, node[u].tag);
+        node[u].tag = Tag();
+    }
+    void build(int u, int l, int r) {
+        if(l == r) {
+            node[u].data = Value{};
+            return;
+        }
+        int mid = l + (r - l) / 2;
+        build(u * 2, l, mid);
+        build(u * 2 + 1, mid + 1, r);
+        push_up(u);
+    }
+    void mod(int u, int l, int r, int ql, int qr, const Tag& t) {
+        if(ql <= l && r <= qr) {
+            apply(u, l, r, t);
+            return;
+        }
+        int mid = l + (r - l) / 2;
+        push_down(u, l, r);
+        if(ql <= mid) {
+            mod(u * 2, l, mid, ql, qr, t);
+        }
+        if(qr > mid) {
+            mod(u * 2 + 1, mid + 1, r, ql, qr, t);
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        push_up(u);
+    }
+
+    Value query(int u, int l, int r, int ql, int qr) {
+        if(ql <= l && r <= qr) {
+            return node[u].data;
+        }
+        int mid = l + (r - l) / 2;
+        push_down(u, l, r);
+        Value res{};
+        if(ql <= mid) {
+            res = res + query(u * 2, l, mid, ql, qr);
+        }
+        if(qr > mid) {
+            res = res + query(u * 2 + 1, mid + 1, r, ql, qr);
+        }
+        return res;
+    }
+    /*
+     * 建立[1, n]，所有位置初始化为Value{}
+     */
+    void build(int n) {
+        this->n = n;
+        node.assign(4 * n + 4, Node());
+        if(n) {
+            build(1, 1, n);
+        }
+    }
+    /*
+     * 对闭区间[l,r]施加标记t
+     */
+    void mod(int l, int r, const Tag& t) {
+        mod(1, 1, n, l, r, t);
+    }
+    /*
+     * 合并闭区间[l,r]的信息
+     */
+    Value query(int l, int r) {
+        return query(1, 1, n, l, r);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+Data 的 \texttt{operator+} 与 Tag 的 \texttt{operator+}/\texttt{apply} 必须满足题目对应的幺元与结合律。
+\end{warnbox}
+
+\section{动态开点线段树}
+\entrymeta{$O(\log V)$}
+未开点区间的初值由 \texttt{make\_value(l,\ r)} 给出，默认是 \texttt{Value\{\}}；需要与区间相关的初值时（例如让每个点带上自己的下标），继承并重写它。
+
+
+\begin{codeline}
+class Data {
+public:
+    int64 sum = 0;
+    Data operator+(const Data& other) const {
+        return {sum + other.sum};
+    }
+};
+
+class Tag {
+public:
+    int64 add = 0;
+    Tag operator+(const Tag& other) const {
+        return {add + other.add};
+    }
+    Data apply(const Data& d, int l, int r) const {
+        return {d.sum + add * (r - l + 1)};
+    }
+};
+
+template <typename Value, typename Tag>
+class SegmentTree {
+public:
+    class Node {
+    public:
+        int ls = -1, rs = -1;
+        Value val{};
+        Tag tag{};
+    };
+
+    vector<Node> node;
+    int ncnt = 0;
+    int root;
+    int le, re;
+
+    /*
+     * 未开点区间[l, r]的初值；默认全零
+     */
+    virtual Value make_value(int, int) {
+        return Value{};
+    }
+
+    int new_node(int l, int r) {
+        int idx = ncnt++;
+        node[idx].val = make_value(l, r);
+        return idx;
+    }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+
+    void apply(int idx, const Tag& t, int l, int r) {
+        node[idx].val = t.apply(node[idx].val, l, r);
+        node[idx].tag = node[idx].tag + t;
+    }
+
+    void push_down(int l, int r, int u) {
+        int mid = l + (r - l) / 2;
+        apply(node[u].ls, node[u].tag, l, mid);
+        apply(node[u].rs, node[u].tag, mid + 1, r);
+        node[u].tag = Tag();
+    }
+
+    void mod(int l, int r, int u, const Tag& t, int ql, int qr) {
+        if(ql <= l && r <= qr) {
+            apply(u, t, l, r);
+            return;
+        }
+        int mid = l + (r - l) / 2;
+        if(node[u].ls == -1) {
+            node[u].ls = new_node(l, mid);
+            node[u].rs = new_node(mid + 1, r);
+        }
+        push_down(l, r, u);
+        if(ql <= mid) {
+            mod(l, mid, node[u].ls, t, ql, qr);
+        }
+        if(qr > mid) {
+            mod(mid + 1, r, node[u].rs, t, ql, qr);
+        }
+        node[u].val = node[node[u].ls].val + node[node[u].rs].val;
+    }
+
+    Value query(int l, int r, int u, int ql, int qr) {
+        if(u == -1) {
+            return make_value(max(l, ql), min(r, qr));
+        }
+        if(ql <= l && r <= qr) {
+            return node[u].val;
+        }
+        int mid = l + (r - l) / 2;
+        Value res{};
+        if(ql <= mid) {
+            res = res + query(l, mid, node[u].ls, ql, qr);
+        }
+        if(qr > mid) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+            res = res + query(mid + 1, r, node[u].rs, ql, qr);
+        }
+        return node[u].tag.apply(res, max(l, ql), min(r, qr));
+    }
+
+    /*
+     * 初始化闭区间[l,r]；capacity 按 n * 2 * log V 预留
+     */
+    void init(int l, int r, int capacity) {
+        le = l;
+        re = r;
+        node.assign(capacity, Node());
+        ncnt = 0;
+        root = new_node(l, r);
+    }
+
+    /*
+     * 对闭区间[l,r]施加标记t，按需开点
+     */
+    void mod(int l, int r, const Tag& t) {
+        mod(le, re, root, t, l, r);
+    }
+
+    /*
+     * 查询闭区间[l,r]的信息，查询不创建节点
+     */
+    Value query(int l, int r) {
+        return query(le, re, root, l, r);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+\texttt{init} 的 capacity 按 n * 2 * log V 预留，节点池用 \texttt{ncnt} 分配，不 \texttt{push\_back}；缺失子节点按空信息处理。
+\end{warnbox}
+
+\section{标记持久化线段树}
+\entrymeta{$O(\log n)$}
+\begin{codeline}
+const int INVALID = -2147483648;
+
+template <class Value, class Tag>
+class SegmentTree {
+public:
+    class Node {
+    public:
+        int ls = INVALID, rs = INVALID;
+        Value val{};
+        Tag tag{};
+    };
+
+    vector<Node> node;
+    int root = INVALID;
+    int le = 0, re = 0;
+
+    int new_node() {
+        int idx = int(node.size());
+        node.emplace_back();
+        return idx;
+    }
+
+    /*
+     * 用本节点标记和左右子节点信息重算本节点信息
+     */
+    void push_up(int u, int l, int r) {
+        Value child{};
+        if(l != r && node[u].ls != INVALID) {
+            child = node[node[u].ls].val + node[node[u].rs].val;
+        }
+        node[u].val = node[u].tag.apply(child, l, r);
+    }
+
+    void mod(int u, int l, int r, int ql, int qr, const Tag& t) {
+        if(ql <= l && r <= qr) {
+            node[u].tag = node[u].tag + t;
+            push_up(u, l, r);
+            return;
+        }
+        int mid = l + (r - l) / 2;
+        if(node[u].ls == INVALID) {
+            node[u].ls = new_node();
+            node[u].rs = new_node();
+        }
+        if(ql <= mid) {
+            mod(node[u].ls, l, mid, ql, qr, t);
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        }
+        if(qr > mid) {
+            mod(node[u].rs, mid + 1, r, ql, qr, t);
+        }
+        push_up(u, l, r);
+    }
+
+    Value query(int u, int l, int r, int ql, int qr) {
+        if(u == INVALID) {
+            return Value();
+        }
+        if(ql <= l && r <= qr) {
+            return node[u].val;
+        }
+        int mid = l + (r - l) / 2;
+        Value res{};
+        if(ql <= mid) {
+            res = res + query(node[u].ls, l, mid, ql, qr);
+        }
+        if(qr > mid) {
+            res = res + query(node[u].rs, mid + 1, r, ql, qr);
+        }
+        return node[u].tag.apply(res, max(l, ql), min(r, qr));
+    }
+
+    /*
+     * 初始化闭区间[l,r]；ncnt为节点池预留量
+     */
+    void init(int l, int r, int ncnt = 1) {
+        le = l;
+        re = r;
+        node.clear();
+        node.reserve(ncnt);
+        root = new_node();
+    }
+
+    /*
+     * 对闭区间[l,r]施加标记t，标记不下传
+     */
+    void mod(int l, int r, const Tag& t) {
+        mod(root, le, re, l, r, t);
+    }
+
+    /*
+     * 查询闭区间[l,r]的信息
+     */
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+    Value query(int l, int r) {
+        return query(root, le, re, l, r);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+标记不下传：\texttt{push\_up} 时把本节点累积标记作用在左右儿子合并值上；这是标记持久化，不是懒惰标记。
+\end{warnbox}
+
+\section{吉司机线段树}
+\entrymeta{$O(\log^2 n)$ 均摊}
+\subsection{P6242 【模板】线段树 3（区间最值操作、区间历史最值）}\label{p6242-ux6a21ux677fux7ebfux6bb5ux6811-3ux533aux95f4ux6700ux503cux64cdux4f5cux533aux95f4ux5386ux53f2ux6700ux503c}
+
+
+\begin{codeline}
+const int INVALID = INT_MIN;
+const int64 INF = 0x3f3f3f3f3f3f3f3f;
+const int N = 500005;
+int n, w;
+
+class Tag {
+public:
+    int64 add, hadd;
+    int64 seadd, hseadd;
+
+    Tag operator+(const Tag& other) const {
+        Tag res = {
+            add + other.add,
+            max(hadd, add + other.hadd),
+            seadd + other.seadd,
+            max(hseadd, seadd + other.hseadd),
+        };
+
+        return res;
+    }
+};
+
+class Data {
+public:
+    int64 maxi, semax;
+    int64 hmaxi;
+    int64 span, sum, mcnt;
+
+    Data operator+(const Data& other) const {
+        Data res = {
+            max(maxi, other.maxi),
+            INVALID,
+            max(hmaxi, other.hmaxi),
+            span + other.span,
+            sum + other.sum,
+            maxi > other.maxi ? mcnt : other.mcnt,
+        };
+
+        if(maxi == other.maxi) {
+            res.semax = max(semax, other.semax);
+            res.mcnt = mcnt + other.mcnt;
+        } else {
+            res.semax = max(min(maxi, other.maxi), max(semax, other.semax));
+        }
+
+        return res;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    }
+
+    Data operator+(const Tag& tag) const {
+        Data res = {
+            maxi + tag.add,
+            semax + tag.seadd,
+            max(hmaxi, maxi + tag.hadd),
+            span,
+            sum + tag.add * mcnt + tag.seadd * (span - mcnt),
+            mcnt,
+        };
+        return res;
+    }
+
+    void read(int idx) {
+        int num;
+        cin >> num;
+        maxi = hmaxi = sum = num;
+        semax = -INF;
+        span = mcnt = 1;
+    }
+};
+
+class Node {
+public:
+    int ls, rs; // Left Son, Right Son
+    Data data;
+    Tag tag;
+};
+
+class Condition {
+public:
+};
+
+const Tag TAG_EP = {0, 0, 0, 0};
+
+class SegmentTree {
+private:
+    static const int MAX_N = N;
+    int size, le, re, opl, opr, root;
+    Node node[MAX_N * 2];
+
+    void build(int l, int r, int cur) {
+        node[cur].tag = TAG_EP;
+        if(l == r) {
+            node[cur].ls = node[cur].rs = INVALID;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+            node[cur].data.read(l);
+            return;
+        } else {
+            int mid = (l + r) >> 1;
+            node[cur].ls = cur + 1;
+            node[cur].rs = cur + 2 * (mid - l + 1);
+            build(l, mid, node[cur].ls);
+            build(mid + 1, r, node[cur].rs);
+            push_up(cur);
+        }
+    }
+
+    void update(int cur, Tag tag) {
+        node[cur].tag = node[cur].tag + tag;
+        node[cur].data = node[cur].data + tag;
+    }
+
+    void push_down(int cur) {
+        if(node[node[cur].ls].data.maxi == node[node[cur].rs].data.maxi) {
+            update(node[cur].ls, node[cur].tag);
+            update(node[cur].rs, node[cur].tag);
+        } else if(node[node[cur].ls].data.maxi > node[node[cur].rs].data.maxi) {
+            Tag se = node[cur].tag;
+            se.add = se.seadd;
+            se.hadd = se.hseadd;
+            update(node[cur].ls, node[cur].tag);
+            update(node[cur].rs, se);
+        } else {
+            Tag se = node[cur].tag;
+            se.add = se.seadd;
+            se.hadd = se.hseadd;
+            update(node[cur].ls, se);
+            update(node[cur].rs, node[cur].tag);
+        }
+        node[cur].tag = TAG_EP;
+    }
+
+    void push_up(int cur) {
+        node[cur].data = node[node[cur].ls].data + node[node[cur].rs].data;
+    }
+
+    void mod(int l, int r, int cur, const Tag& x) {
+        if(opl <= l && r <= opr) {
+            update(cur, x);
+            return;
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+        int mid = (l + r) >> 1;
+        push_down(cur);
+        if(opl <= l && mid <= opr) {
+            update(node[cur].ls, x);
+        } else if(max(opl, l) <= min(opr, mid)) {
+            mod(l, mid, node[cur].ls, x);
+        }
+        if(opl <= mid + 1 && r <= opr) {
+            update(node[cur].rs, x);
+        } else if(max(opl, mid + 1) <= min(opr, r)) {
+            mod(mid + 1, r, node[cur].rs, x);
+        }
+        push_up(cur);
+    }
+
+    bool cupdate(int cur, int64 mini) {
+        if(node[cur].data.maxi <= mini) {
+            return true;
+        } else if(node[cur].data.semax < mini) {
+            int64 g = max(0ll, node[cur].data.maxi - mini);
+            node[cur].data.maxi -= g;
+            node[cur].data.sum -= g * node[cur].data.mcnt;
+            node[cur].tag.add -= g;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     * 对闭区间[l,r]执行取min操作
+     */
+    void cmod(int l, int r, int cur, int64 mini) {
+        if(opl <= l && r <= opr && cupdate(cur, mini)) {
+            return;
+        }
+        int mid = (l + r) >> 1;
+        push_down(cur);
+        if(opl <= l && mid <= opr && cupdate(node[cur].ls, mini)) {
+        } else if(max(opl, l) <= min(opr, mid)) {
+            cmod(l, mid, node[cur].ls, mini);
+        }
+        if(opl <= mid + 1 && r <= opr && cupdate(node[cur].rs, mini)) {
+        } else if(max(opl, mid + 1) <= min(opr, r)) {
+            cmod(mid + 1, r, node[cur].rs, mini);
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=185]
+        push_up(cur);
+    }
+
+    Data query(int l, int r, int cur) {
+        if(opl <= l && r <= opr) {
+            return node[cur].data;
+        }
+        int mid = (l + r) >> 1;
+        push_down(cur);
+        Data resl, resr;
+        int state = 3;
+        if(opl <= l && mid <= opr) {
+            resl = node[node[cur].ls].data;
+        } else if(max(opl, l) <= min(opr, mid)) {
+            resl = query(l, mid, node[cur].ls);
+        } else {
+            state ^= 2;
+        }
+        if(opl <= mid + 1 && r <= opr) {
+            resr = node[node[cur].rs].data;
+        } else if(max(opl, mid + 1) <= min(opr, r)) {
+            resr = query(mid + 1, r, node[cur].rs);
+        } else {
+            state ^= 1;
+        }
+
+        switch(state) {
+        case(3):
+            return (resl + resr);
+        case(2):
+            return resl;
+        case(1):
+            return resr;
+        }
+        return {};
+    }
+
+public:
+    /*
+     * 建立闭区间[l,r]的线段树
+     */
+    void build(int l, int r) {
+        root = 0;
+        le = l;
+        re = r;
+        size = r - l + 1;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=231]
+        build(l, r, root);
+    }
+
+    /*
+     * 对闭区间[l,r]施加加法标记x
+     */
+    void mod(int l, int r, const Tag& x) {
+        opl = l;
+        opr = r;
+        mod(le, re, root, x);
+    }
+
+    /*
+     * 对闭区间[l,r]执行取min操作
+     */
+    void cmod(int l, int r, int64 mini) {
+        opl = l;
+        opr = r;
+        cmod(le, re, root, mini);
+    }
+
+    /*
+     * 查询闭区间[l,r]的维护信息
+     */
+    Data query(int l, int r) {
+        opl = l;
+        opr = r;
+        return query(le, re, root);
+    }
+};
+
+SegmentTree segmentTree;
+\end{codeline}
+
+
+\subsection{U180387 CTSN loves segment tree}\label{u180387-ctsn-loves-segment-tree}
+
+
+\begin{codeline}
+const int INVALID = INT_MIN;
+const int64 INF = 0x3f3f3f3f3f3f3f3f;
+const int N = 300005;
+int n, w;
+int a[N], b[N];
+
+class Tag {
+public:
+    int64 Aadd;
+    int64 seAadd;
+    int64 Badd;
+    int64 seBadd;
+
+    Tag operator+(const Tag& other) const {
+        Tag res = {
+            Aadd + other.Aadd,
+            seAadd + other.seAadd,
+            Badd + other.Badd,
+            seBadd + other.seBadd,
+        };
+
+        return res;
+    }
+};
+
+class CTag {
+public:
+    int64 miniA;
+    int64 miniB;
+};
+
+class Data {
+public:
+    int64 Amaxi, seAmax;
+    int64 Bmaxi, seBmax;
+    int64 c[4];
+    // 11: Amaxi Bmaxi
+
+    Data operator+(const Data& other) const {
+        Data res = {
+            max(Amaxi, other.Amaxi),
+            Amaxi == other.Amaxi ? max(seAmax, other.seAmax) : max(min(Amaxi, other.Amaxi), max(seAmax, other.seAmax)),
+            max(Bmaxi, other.Bmaxi),
+            Bmaxi == other.Bmaxi ? max(seBmax, other.seBmax) : max(min(Bmaxi, other.Bmaxi), max(seBmax, other.seBmax)),
+            -INF,
+            -INF,
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            -INF,
+            -INF};
+
+        if(Amaxi == res.Amaxi) {
+            if(Bmaxi == res.Bmaxi) {
+                for(int i = 0; i < 4; i++) {
+                    res.c[i] = max(res.c[i], c[i]);
+                }
+            } else {
+                res.c[2] = max(res.c[2], c[3]);
+                res.c[2] = max(res.c[2], c[2]);
+                res.c[0] = max(res.c[0], c[1]);
+                res.c[0] = max(res.c[0], c[0]);
+            }
+        } else {
+            if(Bmaxi == res.Bmaxi) {
+                res.c[1] = max(res.c[1], c[3]);
+                res.c[1] = max(res.c[1], c[1]);
+                res.c[0] = max(res.c[0], c[2]);
+                res.c[0] = max(res.c[0], c[0]);
+            } else {
+                for(int i = 0; i < 4; i++) {
+                    res.c[0] = max(res.c[0], c[i]);
+                }
+            }
+        }
+
+        if(other.Amaxi == res.Amaxi) {
+            if(other.Bmaxi == res.Bmaxi) {
+                for(int i = 0; i < 4; i++) {
+                    res.c[i] = max(res.c[i], other.c[i]);
+                }
+            } else {
+                res.c[2] = max(res.c[2], other.c[3]);
+                res.c[2] = max(res.c[2], other.c[2]);
+                res.c[0] = max(res.c[0], other.c[1]);
+                res.c[0] = max(res.c[0], other.c[0]);
+            }
+        } else {
+            if(other.Bmaxi == res.Bmaxi) {
+                res.c[1] = max(res.c[1], other.c[3]);
+                res.c[1] = max(res.c[1], other.c[1]);
+                res.c[0] = max(res.c[0], other.c[2]);
+                res.c[0] = max(res.c[0], other.c[0]);
+            } else {
+                for(int i = 0; i < 4; i++) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+                    res.c[0] = max(res.c[0], other.c[i]);
+                }
+            }
+        }
+
+        return res;
+    }
+
+    Data operator+(const Tag& tag) const {
+        Data res = {
+            Amaxi + tag.Aadd,
+            seAmax + tag.seAadd,
+            Bmaxi + tag.Badd,
+            seBmax + tag.seBadd,
+            c[0] == -INF ? -INF : c[0] + tag.seAadd + tag.seBadd,
+            c[1] == -INF ? -INF : c[1] + tag.seAadd + tag.Badd,
+            c[2] == -INF ? -INF : c[2] + tag.Aadd + tag.seBadd,
+            c[3] == -INF ? -INF : c[3] + tag.Aadd + tag.Badd};
+        return res;
+    }
+
+    void read(int idx) {
+        Amaxi = a[idx];
+        Bmaxi = b[idx];
+        seAmax = seBmax = -INF;
+        c[3] = Amaxi + Bmaxi;
+        c[0] = c[1] = c[2] = -INF;
+    }
+};
+
+class Node {
+public:
+    int ls, rs; // Left Son, Right Son
+    Data data;
+    Tag tag;
+};
+
+class Condition {
+public:
+};
+
+const Tag TAG_EP = {0, 0, 0, 0};
+
+class SegmentTree {
+private:
+    static const int MAX_N = N;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+    int size, le, re, opl, opr, root;
+    /*
+     * le, re: Left Edge, Right Edge
+     * opl, opr: Operation l, r
+     * root: default 0
+     */
+    Node node[MAX_N * 2];
+
+    void build(int l, int r, int cur) {
+        node[cur].tag = TAG_EP;
+        if(l == r) {
+            node[cur].ls = node[cur].rs = INVALID;
+            node[cur].data.read(l);
+            return;
+        } else {
+            int mid = (l + r) >> 1;
+            node[cur].ls = cur + 1;
+            node[cur].rs = cur + 2 * (mid - l + 1);
+            build(l, mid, node[cur].ls);
+            build(mid + 1, r, node[cur].rs);
+            push_up(cur);
+        }
+    }
+
+    void update(int cur, Tag tag) {
+        node[cur].tag = node[cur].tag + tag;
+        node[cur].data = node[cur].data + tag;
+    }
+
+    void push_down(int cur) {
+        if(node[node[cur].ls].data.Amaxi == node[node[cur].rs].data.Amaxi && node[node[cur].ls].data.Bmaxi == node[node[cur].rs].data.Bmaxi) {
+            update(node[cur].ls, node[cur].tag);
+            update(node[cur].rs, node[cur].tag);
+        } else {
+            Tag lt = node[cur].tag, rt = node[cur].tag;
+            if(node[node[cur].ls].data.Amaxi != node[node[cur].rs].data.Amaxi) {
+                if(node[node[cur].ls].data.Amaxi < node[node[cur].rs].data.Amaxi) {
+                    lt.Aadd = lt.seAadd;
+                } else {
+                    rt.Aadd = rt.seAadd;
+                }
+            }
+
+            if(node[node[cur].ls].data.Bmaxi != node[node[cur].rs].data.Bmaxi) {
+                if(node[node[cur].ls].data.Bmaxi < node[node[cur].rs].data.Bmaxi) {
+                    lt.Badd = lt.seBadd;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=185]
+                } else {
+                    rt.Badd = rt.seBadd;
+                }
+            }
+
+            update(node[cur].ls, lt);
+            update(node[cur].rs, rt);
+        }
+        node[cur].tag = TAG_EP;
+    }
+
+    void push_up(int cur) {
+        node[cur].data = node[node[cur].ls].data + node[node[cur].rs].data;
+    }
+
+    void mod(int l, int r, int cur, const Tag& x) {
+        if(opl <= l && r <= opr) {
+            update(cur, x);
+            return;
+        }
+        int mid = (l + r) >> 1;
+        push_down(cur);
+        if(opl <= l && mid <= opr) {
+            update(node[cur].ls, x);
+        } else if(max(opl, l) <= min(opr, mid)) {
+            mod(l, mid, node[cur].ls, x);
+        }
+        if(opl <= mid + 1 && r <= opr) {
+            update(node[cur].rs, x);
+        } else if(max(opl, mid + 1) <= min(opr, r)) {
+            mod(mid + 1, r, node[cur].rs, x);
+        }
+        push_up(cur);
+    }
+
+    bool cupdate(int cur, const CTag& mini) {
+        if(node[cur].data.Amaxi <= mini.miniA && node[cur].data.Bmaxi <= mini.miniB) {
+            return true;
+        } else if(node[cur].data.seAmax < mini.miniA && node[cur].data.seBmax < mini.miniB) {
+            int64 gA = max(0ll, node[cur].data.Amaxi - mini.miniA);
+            int64 gB = max(0ll, node[cur].data.Bmaxi - mini.miniB);
+            node[cur].data.Amaxi -= gA;
+            node[cur].tag.Aadd -= gA;
+            if(node[cur].data.c[3] != -INF) {
+                node[cur].data.c[3] -= gA;
+            }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=231]
+            if(node[cur].data.c[2] != -INF) {
+                node[cur].data.c[2] -= gA;
+            }
+
+            node[cur].data.Bmaxi -= gB;
+            node[cur].tag.Badd -= gB;
+            if(node[cur].data.c[3] != -INF) {
+                node[cur].data.c[3] -= gB;
+            }
+            if(node[cur].data.c[1] != -INF) {
+                node[cur].data.c[1] -= gB;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     * 对闭区间[l,r]执行取min操作
+     */
+    void cmod(int l, int r, int cur, const CTag& mini) {
+        if(opl <= l && r <= opr && cupdate(cur, mini)) {
+            return;
+        }
+        int mid = (l + r) >> 1;
+        push_down(cur);
+        if(opl <= l && mid <= opr && cupdate(node[cur].ls, mini)) {
+        } else if(max(opl, l) <= min(opr, mid)) {
+            cmod(l, mid, node[cur].ls, mini);
+        }
+        if(opl <= mid + 1 && r <= opr && cupdate(node[cur].rs, mini)) {
+        } else if(max(opl, mid + 1) <= min(opr, r)) {
+            cmod(mid + 1, r, node[cur].rs, mini);
+        }
+        push_up(cur);
+    }
+
+    Data query(int l, int r, int cur) {
+        if(opl <= l && r <= opr) {
+            return node[cur].data;
+        }
+        int mid = (l + r) >> 1;
+        push_down(cur);
+        Data resl, resr;
+        int state = 3;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=277]
+        if(opl <= l && mid <= opr) {
+            resl = node[node[cur].ls].data;
+        } else if(max(opl, l) <= min(opr, mid)) {
+            resl = query(l, mid, node[cur].ls);
+        } else {
+            state ^= 2;
+        }
+        if(opl <= mid + 1 && r <= opr) {
+            resr = node[node[cur].rs].data;
+        } else if(max(opl, mid + 1) <= min(opr, r)) {
+            resr = query(mid + 1, r, node[cur].rs);
+        } else {
+            state ^= 1;
+        }
+
+        switch(state) {
+        case(3):
+            return (resl + resr);
+        case(2):
+            return resl;
+        case(1):
+            return resr;
+        }
+        return {};
+    }
+
+public:
+    /*
+     * 建立闭区间[l,r]的线段树
+     */
+    void build(int l, int r) {
+        /*
+         * 极端情况下，线段树可能只有一个节点
+         * 在这种情况下上述写法会报错
+         */
+        root = 0;
+        le = l;
+        re = r;
+        size = r - l + 1;
+        build(l, r, root);
+    }
+
+    /*
+     * 对闭区间[l,r]施加加法标记x
+     */
+    void mod(int l, int r, const Tag& x) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=323]
+        opl = l;
+        opr = r;
+        mod(le, re, root, x);
+    }
+
+    /*
+     * 对闭区间[l,r]执行取min操作
+     */
+    void cmod(int l, int r, const CTag& mini) {
+        opl = l;
+        opr = r;
+        cmod(le, re, root, mini);
+    }
+
+    /*
+     * 查询闭区间[l,r]的维护信息
+     */
+    Data query(int l, int r) {
+        opl = l;
+        opr = r;
+        return query(le, re, root);
+    }
+};
+
+SegmentTree segmentTree;
+\end{codeline}
+\begin{warnbox}
+吉司机线段树：\texttt{push\_down} 按左右最大值分配全量/非最大值标记；\texttt{semax} 需要 \texttt{max\_second \textless{} x \textless{} max\_first}。
+\end{warnbox}
+
+\section{李超线段树}
+\entrymeta{$O(\log^2 n)$}
+\subsection{P4097 【模板】李超线段树}\label{p4097-ux6a21ux677fux674eux8d85ux7ebfux6bb5ux6811}
+
+
+\begin{codeline}
+const double FINF = 1e100;
+const double EPS = 1e-9;
+const int MODER1 = 39989;
+const int MODER2 = 1000000000;
+
+int n;
+int last_ans = 0;
+
+class Line {
+public:
+    double k, b;
+    int idx;
+
+    inline double operator()(double x) const {
+        return k * x + b;
+    }
+};
+
+class LiChaoSegmentTreeNode {
+public:
+    int range_l, range_r;
+    int l, r;
+    Line g;
+};
+
+class LiChaoSegmentTree {
+private:
+    static const int NO_TAG = 0xffffffff;
+    static const int NO_SON = -1;
+    static const int MAX_N = 40001;
+    int size;
+    int root = 0;
+    int node_used = 1; // 0 for root
+    int op_range_l, op_range_r;
+    int ans_idx;
+    double ans;
+    LiChaoSegmentTreeNode node[MAX_N * 2];
+
+    int getNode() {
+        return node_used++;
+    }
+
+    void build(int range_l, int range_r, int cur) {
+        node[cur].range_l = range_l;
+        node[cur].range_r = range_r;
+        node[cur].l = NO_SON;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        node[cur].r = NO_SON;
+        node[cur].g = {FINF, -FINF, -1};
+        if(range_r == range_l) {
+            return;
+        } else {
+            int mid = (range_r + range_l) >> 1;
+            node[cur].l = getNode();
+            node[cur].r = getNode();
+            build(range_l, mid, node[cur].l);
+            build(mid + 1, range_r, node[cur].r);
+        }
+    }
+
+    void update(int cur, Line f) {
+        if(cur == NO_SON) {
+            return;
+        }
+        if(node[cur].g.idx == -1) {
+            node[cur].g = f;
+        } else {
+
+            int mid = (node[cur].range_r + node[cur].range_l) >> 1;
+            double mid_f, mid_g, l_f, l_g, r_f, r_g;
+            mid_f = f(mid);
+            mid_g = node[cur].g(mid);
+
+            if(mid_f - mid_g > EPS || abs(mid_f - mid_g) < EPS && node[cur].g.idx > f.idx) {
+                swap(node[cur].g, f);
+            }
+
+            if(node[cur].range_l == node[cur].range_r) {
+                return;
+            }
+            if(f.k == node[cur].g.k && f.b == node[cur].g.b) {
+                return;
+            }
+            l_f = f(node[cur].range_l);
+            r_f = f(node[cur].range_r);
+            l_g = node[cur].g(node[cur].range_l);
+            r_g = node[cur].g(node[cur].range_r);
+            if(r_f - r_g > EPS || abs(r_f - r_g) < EPS) {
+                update(node[cur].r, f);
+            }
+            if(l_f - l_g > EPS || abs(l_f - l_g) < EPS) {
+                update(node[cur].l, f);
+            }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+        }
+    }
+
+    void add_line(int cur, Line f) {
+        if(cur == NO_SON) {
+            return;
+        }
+        if(max(op_range_l, node[cur].range_l) <= min(op_range_r, node[cur].range_r)) {
+            if(op_range_l <= node[cur].range_l && node[cur].range_r <= op_range_r) {
+                update(cur, f);
+            } else {
+                add_line(node[cur].l, f);
+                add_line(node[cur].r, f);
+            }
+        }
+    }
+
+    void query(int cur, int x) {
+        if(cur == NO_SON) {
+            return;
+        }
+        if(node[cur].range_l <= x && x <= node[cur].range_r) {
+            if(node[cur].g.idx != -1) {
+                double y_x;
+                y_x = node[cur].g(x);
+                if(y_x - ans > EPS || abs(y_x - ans) < EPS && ans_idx > node[cur].g.idx) {
+                    ans = y_x;
+                    ans_idx = node[cur].g.idx;
+                }
+            }
+            query(node[cur].l, x);
+            query(node[cur].r, x);
+        }
+    }
+
+public:
+    /*
+     * 初始化横坐标闭区间[range_l,range_r]
+     */
+    void build(int range_l, int range_r) {
+        root = 0;
+        node_used = 1;
+        build(range_l, range_r, root);
+        size = range_r - range_l + 1;
+    }
+
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+    /*
+     * 插入端点为(x1,y1)、(x2,y2)的线段，编号为idx
+     */
+    void add_line(int x1, int y1, int x2, int y2, int idx) {
+        op_range_l = min(x1, x2);
+        op_range_r = max(x1, x2);
+        Line f;
+        if(x1 == x2) {
+            f = {0., (double)(max(y2, y1)), idx};
+        } else {
+            double k = ((double)(y2 - y1)) / (x2 - x1);
+            f = {k, y1 - k * (x1), idx};
+        }
+        add_line(root, f);
+    }
+
+    /*
+     * 返回横坐标x处最高线段的编号，高度相同取编号较小者
+     */
+    int query(int x) {
+        ans = -FINF;
+        ans_idx = -1;
+        query(root, x);
+        if(ans_idx == -1) {
+            return 0;
+        }
+        return ans_idx;
+    }
+};
+
+LiChaoSegmentTree segmentTree;
+\end{codeline}
+
+
+\subsection{离散坐标：区间最小值}\label{ux79bbux6563ux5750ux6807ux533aux95f4ux6700ux5c0fux503c}
+
+用于在线段覆盖的离散坐标上查询区间最小值，与上面的单点最大线段编号版本独立使用。 \texttt{a{[}1..n{]}} 非递减，允许重复坐标；操作参数是下标，满足 \texttt{1\ \textless{}=\ l\ \textless{}=\ r\ \textless{}=\ n}。 初始水平线也参与取最小值；\texttt{k*x+b} 的结果需在 int64 范围内，中间乘法使用 int128。 建树 O(n)，区间加线段 O(log² n)，区间查询 O(log n)，空间 O(n)。
+
+
+\begin{codeline}
+class Line {
+public:
+    int64 k = 0, b = 0;
+    int64 operator()(int64 x) const {
+        return int64(int128(k) * x + b);
+    }
+};
+
+class LiChaoSegmentTree {
+public:
+    class Node {
+    public:
+        Line g;
+        int64 minimum;
+    };
+    int n = 0;
+    vector<int64> x;
+    vector<Node> node;
+
+    void push_up(int u, int l, int r) {
+        node[u].minimum = min(node[u].g(x[l]), node[u].g(x[r]));
+        if(l < r) {
+            node[u].minimum = min(node[u].minimum, min(node[u * 2].minimum, node[u * 2 + 1].minimum));
+        }
+    }
+    void update(int u, int l, int r, Line f) {
+        int mid = (l + r) / 2;
+        if(f(x[mid]) < node[u].g(x[mid])) {
+            swap(f, node[u].g);
+        }
+        if(l < r) {
+            if(f(x[l]) < node[u].g(x[l])) {
+                update(u * 2, l, mid, f);
+            } else if(f(x[r]) < node[u].g(x[r])) {
+                update(u * 2 + 1, mid + 1, r, f);
+            }
+        }
+        push_up(u, l, r);
+    }
+    void add_line(int u, int l, int r, int ql, int qr, Line f) {
+        if(ql <= l && r <= qr) {
+            update(u, l, r, f);
+            return;
+        }
+        int mid = (l + r) / 2;
+        if(ql <= mid) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            add_line(u * 2, l, mid, ql, qr, f);
+        }
+        if(qr > mid) {
+            add_line(u * 2 + 1, mid + 1, r, ql, qr, f);
+        }
+        push_up(u, l, r);
+    }
+    int64 range_query(int u, int l, int r, int ql, int qr) const {
+        if(ql <= l && r <= qr) {
+            return node[u].minimum;
+        }
+        int64 res = min(node[u].g(x[max(l, ql)]), node[u].g(x[min(r, qr)]));
+        int mid = (l + r) / 2;
+        if(ql <= mid) {
+            res = min(res, range_query(u * 2, l, mid, ql, qr));
+        }
+        if(qr > mid) {
+            res = min(res, range_query(u * 2 + 1, mid + 1, r, ql, qr));
+        }
+        return res;
+    }
+    /*
+     * 由非递减横坐标a[1..n]建树，以水平线value初始化
+     */
+    void build(const vector<int64>& a, int64 value) {
+        x = a;
+        n = int(a.size()) - 1;
+        node.assign(4 * n + 4, Node{{0, value}, value});
+    }
+    /*
+     * 在下标闭区间[l,r]加入直线kx+b
+     */
+    void add_line(int l, int r, int64 k, int64 b) {
+        add_line(1, 1, n, l, r, {k, b});
+    }
+    /*
+     * 查询下标闭区间[l,r]内的最小值
+     */
+    int64 range_query(int l, int r) const {
+        return range_query(1, 1, n, l, r);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+用 double 比较，\texttt{EPS} 过小时极端坐标可能选错线段；需要精确时改成 int128 交叉相乘。
+\end{warnbox}
+
+\section{线段树合并}
+\entrymeta{$O(n\log n)$}
+本例只做\textbf{单点加、整树查询、破坏性合并}；mod 的 l、r 必须相等，不能用于区间加。 合并后子树节点可能被父树复用，子树答案在 dfs3 返回前保存，之后不要再查询已合并的子树。 固定节点池需按 O((n+m) log V) 估算；深链上的 DFS 仍需按赛题栈限制改成迭代。
+
+\subsection{P4556 {[}Vani有约会{]} 雨天的尾巴 /【模板】线段树合并}\label{p4556-vaniux6709ux7ea6ux4f1a-ux96e8ux5929ux7684ux5c3eux5df4-ux6a21ux677fux7ebfux6bb5ux6811ux5408ux5e76}
+
+
+\begin{codeline}
+const int INF = 0x3f3f3f3f;
+const int INVALID = -2147483648;
+const int N = 100005;
+int n, m, moder;
+
+class Tag {
+public:
+    int add;
+    Tag operator+(const Tag& other) {
+        return {add + other.add};
+    }
+};
+
+class Data {
+public:
+    int maxi, idx;
+
+    Data operator+(const Data& other) {
+        if(maxi >= other.maxi) {
+            return *this;
+        } else {
+            return other;
+        }
+    }
+
+    void read(int i) {
+        idx = i;
+        cin >> maxi;
+    }
+};
+
+inline Data merge(int l, int r, const Data& d, const Tag& tag) {
+    return {
+        d.maxi + tag.add,
+        d.idx};
+}
+
+class SegmentNode {
+public:
+    int ls, rs; // Left Son, Right Son
+    Data data;
+    Tag tag;
+};
+
+const Data DATA_EP = {0, 0};
+const Tag TAG_EP = {0};
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+
+SegmentNode stNode[200 * N];
+int stNode_cnt;
+
+class SegmentTree {
+private:
+    static const int MAX_N = N;
+    int size, le, re, opl, opr, root;
+
+    int getNode(int idx) {
+        stNode[stNode_cnt] = {
+            INVALID, INVALID, {0, idx}, {0}};
+        return stNode_cnt++;
+    }
+
+    void push_up(int cur) {
+        if(stNode[cur].ls != INVALID && stNode[cur].rs != INVALID) {
+            stNode[cur].data = stNode[stNode[cur].ls].data + stNode[stNode[cur].rs].data;
+        } else if(stNode[cur].ls != INVALID) {
+            stNode[cur].data = stNode[stNode[cur].ls].data;
+        } else if(stNode[cur].rs != INVALID) {
+            stNode[cur].data = stNode[stNode[cur].rs].data;
+        } else {
+            return;
+        }
+    }
+
+    void mod(int l, int r, int cur, const Tag& x) {
+        if(opl <= l && r <= opr) {
+            stNode[cur].data = merge(l, r, stNode[cur].data, x);
+            stNode[cur].tag = stNode[cur].tag + x;
+        } else {
+            int mid = (l + r) >> 1;
+            if(stNode[cur].ls == INVALID) {
+                stNode[cur].ls = getNode(l);
+                stNode[cur].rs = getNode(mid + 1);
+            }
+            if(max(opl, l) <= min(opr, mid)) {
+                mod(l, mid, stNode[cur].ls, x);
+            }
+            if(max(opl, mid + 1) <= min(opr, r)) {
+                mod(mid + 1, r, stNode[cur].rs, x);
+            }
+            push_up(cur);
+        }
+    }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+
+    Data query(int l, int r, int cur) {
+        if(cur == INVALID) {
+            return DATA_EP;
+        }
+        if(opl <= l && r <= opr) {
+            return stNode[cur].data;
+        } else if(cur != INVALID) {
+            int mid = (l + r) >> 1;
+            bool dual = max(opl, l) <= min(opr, mid) && max(opl, mid + 1) <= min(opr, r);
+
+            Data res;
+            if(dual) {
+                res = query(l, mid, stNode[cur].ls) +
+                      query(mid + 1, r, stNode[cur].rs);
+            } else if(max(opl, l) <= min(opr, mid)) {
+                res = query(l, mid, stNode[cur].ls);
+            } else {
+                res = query(mid + 1, r, stNode[cur].rs);
+            }
+            return merge(max(opl, l), min(opr, r), res, stNode[cur].tag);
+        } else {
+            return DATA_EP;
+        }
+    }
+
+    int dfsMerge(int l, int r, int curS, int curO, const SegmentTree& other) {
+        if(curS == INVALID && curO == INVALID) {
+            return INVALID;
+        } else if(curS != INVALID && curO != INVALID) {
+            if(l == r) {
+                stNode[curS].data.maxi += stNode[curO].data.maxi;
+            } else {
+                int mid = (l + r) >> 1;
+                stNode[curS].ls = dfsMerge(l, mid, stNode[curS].ls, stNode[curO].ls, other);
+                stNode[curS].rs = dfsMerge(mid + 1, r, stNode[curS].rs, stNode[curO].rs, other);
+                push_up(curS);
+            }
+            return curS;
+        } else if(curS != INVALID) {
+            return curS;
+        } else {
+            return curO;
+        }
+    }
+
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+public:
+    /*
+     * 建立值域闭区间[l,r]的空树
+     */
+    void build(int l, int r) {
+        root = getNode(l);
+        le = l;
+        re = r;
+        size = r - l + 1;
+    }
+
+    /*
+     * 更新闭区间[l,r]，此例调用时l=r
+     */
+    void mod(int l, int r, const Tag& x) {
+        opl = l;
+        opr = r;
+        mod(le, re, root, x);
+    }
+
+    /*
+     * 查询闭区间[l,r]的维护信息
+     */
+    Data query(int l, int r) {
+        opl = l;
+        opr = r;
+        return query(le, re, root);
+    }
+
+    void operator+=(const SegmentTree& other) {
+        root = dfsMerge(le, re, root, other.root, other);
+    }
+};
+
+class HLDTreeNode {
+public:
+    vector<int> son;
+    int dfn, fa, w, link_head, d;
+    int heavy, sub_dfn;
+    int ans;
+    SegmentTree st;
+};
+
+class HLDTree {
+private:
+    static const int MAX_N = N;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=185]
+    int dfn = 1;
+    HLDTreeNode hldNode[MAX_N];
+
+    void dfs1(int cur, int fa, int d) {
+        hldNode[cur].fa = fa;
+        hldNode[cur].w = 1;
+        hldNode[cur].d = d;
+        hldNode[cur].st.build(1, N - 1);
+        int heavy = -1, w = 0;
+        for(int son : hldNode[cur].son) {
+            if(son != fa) {
+                dfs1(son, cur, d + 1);
+                hldNode[cur].w += hldNode[son].w;
+                if(hldNode[son].w > w) {
+                    w = hldNode[son].w;
+                    heavy = son;
+                }
+            }
+        }
+        if(heavy > 0) {
+            hldNode[cur].heavy = heavy;
+        }
+    }
+
+    void dfs2(int cur, int fa, int link_head) {
+        inv_dfn[dfn] = cur;
+        hldNode[cur].sub_dfn = dfn;
+        hldNode[cur].dfn = dfn++;
+        hldNode[cur].link_head = link_head;
+        if(hldNode[cur].heavy > 0) {
+            dfs2(hldNode[cur].heavy, cur, link_head);
+            hldNode[cur].sub_dfn = hldNode[hldNode[cur].heavy].sub_dfn;
+        }
+        for(int son : hldNode[cur].son) {
+            if(son != fa && son != hldNode[cur].heavy) {
+                dfs2(son, cur, son);
+                hldNode[cur].sub_dfn = hldNode[son].sub_dfn;
+            }
+        }
+    }
+
+    int find_lca(int x, int y) {
+        while(hldNode[x].link_head != hldNode[y].link_head) { // 先找LCA和计算st之间的距离
+            if(hldNode[hldNode[x].link_head].d < hldNode[hldNode[y].link_head].d) {
+                swap(x, y);
+            }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=231]
+            x = hldNode[hldNode[x].link_head].fa;
+        }
+        return hldNode[x].d < hldNode[y].d ? x : y;
+    }
+
+public:
+    int root = 1;
+    int inv_dfn[MAX_N];
+
+    /*
+     * 添加无向边(u,v)
+     */
+    void add_edge(int u, int v) {
+        hldNode[u].son.push_back(v);
+        hldNode[v].son.push_back(u);
+    }
+
+    /*
+     * 以tree_root为根预处理树链信息
+     */
+    void build(int tree_root) {
+        root = tree_root;
+        dfs1(root, 0, 1);
+        dfs2(root, 0, root);
+    }
+
+    /*
+     * 在x到y的路径上加入颜色z，使用树上差分
+     */
+    void path_add(int x, int y, int z) {
+
+        int lca = find_lca(x, y);
+        hldNode[x].st.mod(z, z, {1});
+        hldNode[y].st.mod(z, z, {1});
+        hldNode[lca].st.mod(z, z, {-1});
+        if(hldNode[lca].fa) {
+            hldNode[hldNode[lca].fa].st.mod(z, z, {-1});
+        }
+    }
+
+    /*
+     * 自底向上合并子树线段树，合并到父亲前保存当前点答案
+     */
+    void dfs3(int cur) {
+        for(int son : hldNode[cur].son) {
+            if(son != hldNode[cur].fa) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=277]
+                dfs3(son);
+                hldNode[cur].st += hldNode[son].st;
+            }
+        }
+        Data res = hldNode[cur].st.query(1, N - 1);
+        hldNode[cur].ans = res.maxi == 0 ? 0 : res.idx;
+    }
+
+    int query(int cur) {
+        return hldNode[cur].ans;
+    }
+
+};
+
+HLDTree hldTree;
+\end{codeline}
+\begin{warnbox}
+节点池按 \texttt{n + 4m log V} 估算；链状树需注意递归深度。
+\end{warnbox}
+
+\section{可持久化线段树}
+\entrymeta{$O(\log n)$}
+\begin{codeline}
+class SegmentTree {
+public:
+    class Node {
+    public:
+        int ls = 0, rs = 0, cnt = 0;
+    };
+    vector<Node> node;
+    vector<int> root;
+    vector<int64> value;
+
+    int mod(int u, int l, int r, int pos) {
+        int v = int(node.size());
+        node.push_back(node[u]);
+        node[v].cnt++;
+        if(l != r) {
+            int mid = l + (r - l) / 2;
+            if(pos <= mid) {
+                node[v].ls = mod(node[u].ls, l, mid, pos);
+            } else {
+                node[v].rs = mod(node[u].rs, mid + 1, r, pos);
+            }
+        }
+        return v;
+    }
+    /*
+     * 将a[1..n]离散化并建立前缀版本
+     */
+    void build(const vector<int64>& a) {
+        int n = int(a.size()) - 1;
+        value.assign(a.begin() + 1, a.end());
+        sort(value.begin(), value.end());
+        value.erase(unique(value.begin(), value.end()), value.end());
+        node.assign(1, Node());
+        root.assign(n + 1, 0);
+        int logn = 0;
+        while((1LL << logn) < int(value.size())) {
+            logn++;
+        }
+        node.reserve(1 + size_t(n) * (logn + 1));
+        for(int i = 1; i <= n; i++) {
+            int pos = lower_bound(value.begin(), value.end(), a[i]) - value.begin();
+            root[i] = mod(root[i - 1], 0, int(value.size()) - 1, pos);
+        }
+    }
+    /*
+     * 查询闭区间[l,r]中第k小的原值，k从1开始
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+     */
+    int64 query(int l, int r, int k) const {
+        int u = root[r], v = root[l - 1], le = 0, re = int(value.size()) - 1;
+        while(le != re) {
+            int mid = le + (re - le) / 2;
+            int cnt = node[node[u].ls].cnt - node[node[v].ls].cnt;
+            if(k <= cnt) {
+                u = node[u].ls;
+                v = node[v].ls;
+                re = mid;
+            } else {
+                k -= cnt;
+                u = node[u].rs;
+                v = node[v].rs;
+                le = mid + 1;
+            }
+        }
+        return value[le];
+    }
+};
+\end{codeline}
+
+
+\subsection{P3293 {[}SCOI2016{]} 美味}\label{p3293-scoi2016-ux7f8eux5473}
+
+
+\begin{codeline}
+const int64 MAX_H = 18;
+const int N = 200005;
+const int M = 100005;
+const int64 INVALID = 0;
+
+class Tag {
+public:
+    int add;
+    Tag operator+(const Tag& other) {
+        return {add + other.add};
+    }
+};
+
+class Data {
+public:
+    int64 sum;
+    Data operator+(const Data& other) {
+        return {sum + other.sum};
+    }
+};
+
+inline Data merge(int64 l, int64 r, const Data& d, const Tag& tag) {
+    return {d.sum + (r - l + 1) * tag.add};
+}
+
+class Node {
+public:
+    int64 ls, rs;
+    Data data;
+    Tag tag;
+};
+
+const Data DATA_EP = {0};
+const Tag TAG_EP = {0};
+
+Node seg_node[N * MAX_H];
+int node_cnt = 1;
+
+inline int getNode() {
+    return node_cnt++;
+}
+
+class SegmentTree {
+public:
+    static const int64 MAX_N = N;
+    int64 size, le, re, opl, opr;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    Node* node = seg_node;
+    int root[N];
+
+    void push_down(int64 l, int64 r, int64 cur) {
+        Node& ls = node[node[cur].ls];
+        Node& rs = node[node[cur].rs];
+        int64 mid = (l + r) >> 1;
+        ls.data = merge(l, mid, ls.data, node[cur].tag);
+        ls.tag = ls.tag + node[cur].tag;
+        rs.data = merge(mid + 1, r, rs.data, node[cur].tag);
+        rs.tag = rs.tag + node[cur].tag;
+        node[cur].tag = TAG_EP;
+    }
+
+    void push_up(int64 cur) {
+        node[cur].data = node[node[cur].ls].data + node[node[cur].rs].data;
+    }
+
+    void mod(int64 l, int64 r, int64 cur, const int64 lst, const Tag& x) {
+        if(opl <= l && r <= opr) {
+            node[cur].data = merge(l, r, node[lst].data, x);
+            node[cur].tag = node[lst].tag + x;
+        } else {
+            int64 mid = (l + r) >> 1;
+            push_down(l, r, cur);
+            if(max(opl, l) <= min(opr, mid)) {
+                node[cur].ls = getNode();
+                mod(l, mid, node[cur].ls, node[lst].ls, x);
+            } else {
+                node[cur].ls = node[lst].ls;
+            }
+            if(max(opl, mid + 1) <= min(opr, r)) {
+                node[cur].rs = getNode();
+                mod(mid + 1, r, node[cur].rs, node[lst].rs, x);
+            } else {
+                node[cur].rs = node[lst].rs;
+            }
+            push_up(cur);
+        }
+    }
+
+    Data query(int64 l, int64 r, int64 cur, const int lst) {
+        if(cur != INVALID) {
+            if(opl <= l && r <= opr) {
+                return {node[cur].data.sum - node[lst].data.sum};
+            } else {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+                int64 mid = (l + r) >> 1;
+                bool dual = max(opl, l) <= min(opr, mid) && max(opl, mid + 1) <= min(opr, r);
+
+                Data res;
+                if(dual) {
+                    res = query(l, mid, node[cur].ls, node[lst].ls) +
+                          query(mid + 1, r, node[cur].rs, node[lst].rs);
+                } else if(max(opl, l) <= min(opr, mid)) {
+                    res = query(l, mid, node[cur].ls, node[lst].ls);
+                } else {
+                    res = query(mid + 1, r, node[cur].rs, node[lst].rs);
+                }
+                return merge(max(opl, l), min(opr, r), res, node[cur].tag);
+            }
+        } else {
+            return DATA_EP;
+        }
+    }
+
+    /*
+     * 初始化值域闭区间[l,r]
+     */
+    void build(int64 l, int64 r) {
+        le = l;
+        re = r;
+        size = r - l + 1;
+    }
+
+    /*
+     * 基于版本ver修改闭区间[l,r]，写入版本cur
+     */
+    void mod_from(int cur, int ver, int64 l, int64 r, const Tag& x) {
+        opl = l;
+        opr = r;
+        if(!root[cur]) {
+            root[cur] = getNode();
+        }
+        mod(le, re, root[cur], root[ver], x);
+    }
+
+    /*
+     * 查询版本cur减去版本ver后的闭区间[l,r]信息
+     */
+    Data query_from(int cur, int ver, int64 l, int64 r) {
+        opl = l;
+        opr = r;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+        return query(le, re, root[cur], root[ver]);
+    }
+};
+
+SegmentTree sgt;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, m, a;
+    cin >> n >> m;
+    sgt.build(0, M - 1);
+    for(int i = 1; i <= n; i++) {
+        cin >> a;
+        sgt.mod_from(i, i - 1, a, a, {1});
+    }
+
+    int b, x, vl, vr;
+    int l, r, sum;
+    for(int i = 1; i <= m; i++) {
+        cin >> b >> x >> vl >> vr;
+        sum = 0;
+        for(int j = 1; j <= MAX_H; j++) {
+            if((1 << (MAX_H - j)) & b) {
+                int raw_l = sum - x;
+                int raw_r = sum + (1 << (MAX_H - j)) - x - 1;
+                Data res = DATA_EP;
+                if(raw_l <= raw_r && raw_r >= 0 && raw_l <= M - 1) {
+                    l = max(0, raw_l);
+                    r = min(M - 1, raw_r);
+                    res = sgt.query_from(vr, vl - 1, l, r);
+                }
+                if(res.sum > 0) {
+                } else {
+                    sum += 1 << (MAX_H - j);
+                }
+            } else {
+                int raw_l = sum + (1 << (MAX_H - j)) - x;
+                int raw_r = sum + (1 << (MAX_H - j + 1)) - x - 1;
+                Data res = DATA_EP;
+                if(raw_l <= raw_r && raw_r >= 0 && raw_l <= M - 1) {
+                    l = max(0, raw_l);
+                    r = min(M - 1, raw_r);
+                    res = sgt.query_from(vr, vl - 1, l, r);
+                }
+                if(res.sum > 0) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=185]
+                    sum += 1 << (MAX_H - j);
+                } else {
+                }
+            }
+        }
+        cout << (sum ^ b) << '\n';
+    }
+}
+\end{codeline}
+\begin{warnbox}
+版本编号从 0 开始；区间查询时先判断真实区间与值域是否有交，再钳位。
+\end{warnbox}
+
+\section{可持久化数组}
+\entrymeta{$O(\log n)$}
+\subsection{P3919 【模板】可持久化线段树 1（可持久化数组）}\label{p3919-ux6a21ux677fux53efux6301ux4e45ux5316ux7ebfux6bb5ux6811-1ux53efux6301ux4e45ux5316ux6570ux7ec4}
+
+
+\begin{codeline}
+template <class Data = int>
+class PersistentArray {
+public:
+    class Node {
+    public:
+        int ls = 0, rs = 0;
+        Data data{};
+    };
+    vector<Node> node;
+    vector<int> version;
+    int n = 0;
+
+    /*
+     * 由a[1..n]建立版本0，capacity仅用于预留节点空间
+     */
+    int build(int l, int r, const vector<Data>& a) {
+        int u = int(node.size());
+        node.emplace_back();
+        if(l == r) {
+            node[u].data = a[l];
+        } else {
+            int mid = l + (r - l) / 2;
+            node[u].ls = build(l, mid, a);
+            node[u].rs = build(mid + 1, r, a);
+        }
+        return u;
+    }
+    int modify(int u, int l, int r, int pos, const Data& x) {
+        int v = int(node.size());
+        node.push_back(node[u]);
+        if(l == r) {
+            node[v].data = x;
+        } else {
+            int mid = l + (r - l) / 2;
+            if(pos <= mid) {
+                node[v].ls = modify(node[u].ls, l, mid, pos, x);
+            } else {
+                node[v].rs = modify(node[u].rs, mid + 1, r, pos, x);
+            }
+        }
+        return v;
+    }
+    /*
+     * 由a[1..n]建立版本0，capacity仅用于预留节点空间
+     */
+    void build(const vector<Data>& a, size_t capacity = 0) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        n = int(a.size()) - 1;
+        node.clear();
+        version.clear();
+        node.reserve(capacity);
+        version.push_back(build(1, n, a));
+    }
+    /*
+     * 复制版本ver，返回新版本号
+     */
+    int copy(int ver) {
+        version.push_back(version[ver]);
+        return int(version.size()) - 1;
+    }
+    /*
+     * 基于版本ver修改pos处的值，返回新版本号
+     */
+    int modify(int ver, int pos, const Data& x) {
+        int root = modify(version[ver], 1, n, pos, x);
+        version.push_back(root);
+        return int(version.size()) - 1;
+    }
+    /*
+     * 查询版本ver中pos处的值，不修改历史版本
+     */
+    Data query(int ver, int pos) const {
+        int u = version[ver], l = 1, r = n;
+        while(l != r) {
+            int mid = l + (r - l) / 2;
+            if(pos <= mid) {
+                u = node[u].ls;
+                r = mid;
+            } else {
+                u = node[u].rs;
+                l = mid + 1;
+            }
+        }
+        return node[u].data;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+只复制根指针，修改路径上的节点新建。
+\end{warnbox}
+
+
+\chapter{平衡树}
+
+\section{Splay树}
+\entrymeta{$O(\log n)$ 均摊}
+\subsection{P3391 【模板】文艺平衡树}\label{p3391-ux6a21ux677fux6587ux827aux5e73ux8861ux6811}
+
+
+\begin{codeline}
+class Tag {
+public:
+    int64 add = 0;
+    bool rev = false;
+};
+
+class Splay {
+public:
+    class Node {
+    public:
+        int son[2]{}, fa = 0, size = 0;
+        int64 data = 0, sum = 0;
+        Tag tag;
+    };
+    vector<Node> node;
+    int root = 0, n = 0;
+
+    void push_up(int u) {
+        int l = node[u].son[0], r = node[u].son[1];
+        node[u].size = node[l].size + node[r].size + 1;
+        node[u].sum = node[l].sum + node[r].sum + node[u].data;
+    }
+    void apply(int u, const Tag& t) {
+        if(!u) {
+            return;
+        }
+        node[u].data += t.add;
+        node[u].sum += t.add * node[u].size;
+        node[u].tag.add += t.add;
+        if(t.rev) {
+            swap(node[u].son[0], node[u].son[1]);
+            node[u].tag.rev ^= true;
+        }
+    }
+    void push_down(int u) {
+        apply(node[u].son[0], node[u].tag);
+        apply(node[u].son[1], node[u].tag);
+        node[u].tag = Tag();
+    }
+    bool dir(int u) const {
+        return node[node[u].fa].son[1] == u;
+    }
+    void rot(int u) {
+        int fa = node[u].fa, g = node[fa].fa, d = dir(u);
+        int v = node[u].son[d ^ 1];
+        if(g) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            node[g].son[dir(fa)] = u;
+        }
+        node[u].fa = g;
+        node[fa].son[d] = v;
+        if(v) {
+            node[v].fa = fa;
+        }
+        node[u].son[d ^ 1] = fa;
+        node[fa].fa = u;
+        push_up(fa);
+        push_up(u);
+    }
+    void splay(int u, int goal = 0) {
+        vector<int> st;
+        for(int v = u; v != goal; v = node[v].fa) {
+            st.push_back(v);
+        }
+        if(goal) {
+            st.push_back(goal);
+        }
+        for(auto it = st.rbegin(); it != st.rend(); ++it) {
+            push_down(*it);
+        }
+        while(node[u].fa != goal) {
+            int fa = node[u].fa;
+            if(node[fa].fa != goal) {
+                rot(dir(u) == dir(fa) ? fa : u);
+            }
+            rot(u);
+        }
+        if(!goal) {
+            root = u;
+        }
+    }
+    /*
+     * 由a[1..n]建立序列，两端补哨兵
+     */
+    int build(int l, int r, int fa, const vector<int64>& a) {
+        if(l > r) {
+            return 0;
+        }
+        int mid = (l + r) / 2, u = mid + 1;
+        node[u].fa = fa;
+        node[u].data = a[mid];
+        node[u].son[0] = build(l, mid - 1, u, a);
+        node[u].son[1] = build(mid + 1, r, u, a);
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+        push_up(u);
+        return u;
+    }
+    int kth(int k) {
+        int u = root;
+        while(true) {
+            push_down(u);
+            int s = node[node[u].son[0]].size;
+            if(k <= s) {
+                u = node[u].son[0];
+            } else if(k == s + 1) {
+                return u;
+            } else {
+                k -= s + 1;
+                u = node[u].son[1];
+            }
+        }
+    }
+    int split(int l, int r) {
+        int x = kth(l);
+        splay(x);
+        int y = kth(r + 2);
+        splay(y, x);
+        return node[y].son[0];
+    }
+    /*
+     * 由a[1..n]建立序列，两端补哨兵
+     */
+    void build(const vector<int64>& a) {
+        n = int(a.size()) - 1;
+        vector<int64> b(n + 2);
+        for(int i = 1; i <= n; i++) {
+            b[i] = a[i];
+        }
+        node.assign(n + 3, Node());
+        root = build(0, n + 1, 0, b);
+    }
+    /*
+     * 对闭区间[l,r]施加加法和翻转标记t
+     */
+    void mod(int l, int r, const Tag& t) {
+        apply(split(l, r), t);
+        push_up(node[root].son[1]);
+        push_up(root);
+    }
+    /*
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+     * 翻转闭区间[l,r]
+     */
+    void rev(int l, int r) {
+        mod(l, r, {0, true});
+    }
+    /*
+     * 查询闭区间[l,r]的和
+     */
+    int64 query(int l, int r) {
+        return node[split(l, r)].sum;
+    }
+    /*
+     * 按当前序列顺序返回所有值，不含哨兵
+     */
+    vector<int64> values() {
+        vector<int64> res;
+        vector<int> st;
+        int u = root, idx = 0;
+        while(u || !st.empty()) {
+            while(u) {
+                push_down(u);
+                st.push_back(u);
+                u = node[u].son[0];
+            }
+            u = st.back();
+            st.pop_back();
+            if(++idx > 1 && idx <= n + 1) {
+                res.push_back(node[u].data);
+            }
+            u = node[u].son[1];
+        }
+        return res;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+P3391 文艺平衡树：两端加哨兵，\texttt{kth} 返回的是带哨兵的下标。
+\end{warnbox}
+
+\section{PBDS 平衡树}
+\entrymeta{$O(\log n)$}
+\begin{codeline}
+template <class Data = int>
+class Splay {
+public:
+    class Node {
+    public:
+        int son[2]{}, fa = 0, cnt = 0, size = 0;
+        Data data{};
+    };
+    vector<Node> node{Node()};
+    int root = 0;
+
+    bool dir(int u) const {
+        return node[node[u].fa].son[1] == u;
+    }
+    void push_up(int u) {
+        node[u].size = node[u].cnt + node[node[u].son[0]].size + node[node[u].son[1]].size;
+    }
+    void rot(int u) {
+        int fa = node[u].fa, g = node[fa].fa, d = dir(u);
+        int v = node[u].son[d ^ 1];
+        if(g) {
+            node[g].son[dir(fa)] = u;
+        }
+        node[u].fa = g;
+        node[fa].son[d] = v;
+        if(v) {
+            node[v].fa = fa;
+        }
+        node[u].son[d ^ 1] = fa;
+        node[fa].fa = u;
+        push_up(fa);
+        push_up(u);
+    }
+    void splay(int u) {
+        while(node[u].fa) {
+            int fa = node[u].fa;
+            if(node[fa].fa) {
+                rot(dir(u) == dir(fa) ? fa : u);
+            }
+            rot(u);
+        }
+        root = u;
+    }
+    int find(const Data& d) {
+        int u = root, last = 0;
+        while(u && !(node[u].data == d)) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            last = u;
+            u = node[u].son[node[u].data < d];
+        }
+        if(u) {
+            splay(u);
+        } else if(last) {
+            splay(last);
+        }
+        return u;
+    }
+    /*
+     * 清空平衡树
+     */
+    void clear() {
+        node.assign(1, Node());
+        root = 0;
+    }
+    int size() const {
+        return node[root].size;
+    }
+    /*
+     * 插入d，重复值累计出现次数
+     */
+    void insert(const Data& d) {
+        int u = root, fa = 0;
+        while(u && !(node[u].data == d)) {
+            fa = u;
+            u = node[u].son[node[u].data < d];
+        }
+        if(!u) {
+            u = int(node.size());
+            node.emplace_back();
+            node[u].data = d;
+            node[u].fa = fa;
+            if(fa) {
+                node[fa].son[node[fa].data < d] = u;
+            }
+        }
+        node[u].cnt++;
+        push_up(u);
+        splay(u);
+    }
+    /*
+     * 删除一个d，返回是否存在并删除
+     */
+    bool remove(const Data& d) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+        int u = find(d);
+        if(!u) {
+            return false;
+        }
+        if(--node[u].cnt) {
+            push_up(u);
+            return true;
+        }
+        int l = node[u].son[0], r = node[u].son[1];
+        if(l) {
+            node[l].fa = 0;
+        }
+        if(r) {
+            node[r].fa = 0;
+        }
+        root = l;
+        if(!l) {
+            root = r;
+        } else {
+            int v = l;
+            while(node[v].son[1]) {
+                v = node[v].son[1];
+            }
+            splay(v);
+            node[v].son[1] = r;
+            if(r) {
+                node[r].fa = v;
+            }
+            push_up(v);
+        }
+        return true;
+    }
+    /*
+     * 返回d的排名，即小于d的元素个数加1
+     */
+    int rank(const Data& d) {
+        find(d);
+        if(!root) {
+            return 1;
+        }
+        return node[node[root].son[0]].size + (node[root].data < d ? node[root].cnt : 0) + 1;
+    }
+    /*
+     * 将第k小的值写入res，排名不存在时返回false
+     */
+    bool kth(int k, Data& res) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+        if(k < 1 || k > size()) {
+            return false;
+        }
+        int u = root;
+        while(true) {
+            int s = node[node[u].son[0]].size;
+            if(k <= s) {
+                u = node[u].son[0];
+            } else if(k <= s + node[u].cnt) {
+                break;
+            } else {
+                k -= s + node[u].cnt;
+                u = node[u].son[1];
+            }
+        }
+        res = node[u].data;
+        splay(u);
+        return true;
+    }
+    /*
+     * 将严格小于d的最大值写入res，不存在时返回false
+     */
+    bool prev(const Data& d, Data& res) {
+        return kth(rank(d) - 1, res);
+    }
+    /*
+     * 将严格大于d的最小值写入res，不存在时返回false
+     */
+    bool next(const Data& d, Data& res) {
+        int k = rank(d);
+        if(root && node[root].data == d) {
+            k += node[root].cnt;
+        }
+        return kth(k, res);
+    }
+};
+\end{codeline}
+
+
+\subsection{PBDS 实现}\label{pbds-ux5b9eux73b0}
+
+
+\begin{codeline}
+/*
+ * PBDS 实现：用 __gnu_pbds 的红黑树，通过 TreeUpdate 策略维护子树大小，
+ * 从而支持 rank / kth，省去手写旋转。
+ */
+using namespace __gnu_pbds;
+
+class Node {
+public:
+    int k;
+    mutable int cnt;
+
+    bool operator<(const Node& o) const {
+        return k < o.k;
+    }
+};
+
+class MetaData {
+public:
+    int size;
+};
+
+MetaData METADATA_EP = {0};
+
+template <class cIt, class It, class Cmp, class _A>
+class TreeUpdate {
+public:
+    typedef MetaData metadata_type;
+
+#define nd(x) ((x).m_p_nd)
+#define lson(x) (nd(x)->m_p_left)
+#define rson(x) (nd(x)->m_p_right)
+#define md(x) ((x) == node_end() ? METADATA_EP : (metadata_type)(nd(x)->m_metadata))
+#define rmd(x) ((metadata_type&)(nd(x)->m_metadata))
+
+    virtual cIt node_begin() const = 0;
+
+    virtual cIt node_end() const = 0;
+
+    void operator()(It u, cIt end) {
+        It ls = lson(u);
+        It rs = rson(u);
+        metadata_type data = {0};
+        if(ls != end) {
+            data.size += md(ls).size;
+        }
+        if(rs != end) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            data.size += md(rs).size;
+        }
+        data.size += (*u)->cnt;
+
+        rmd(u) = data;
+    }
+
+    /*
+     * 返回第 k 小的值
+     */
+    int kth(int k) {
+        cIt u = node_begin();
+        cIt end = node_end();
+
+        while(u != end) {
+            It ls = lson(u);
+            It rs = rson(u);
+
+            if(k <= md(ls).size) {
+                u = ls;
+            } else if(k <= md(ls).size + (*u)->cnt) {
+                return (*u)->k;
+            } else {
+                k -= md(ls).size + (*u)->cnt;
+                u = rs;
+            }
+        }
+        return -1;
+    }
+
+    /*
+     * 返回小于 k 的元素个数加一
+     */
+    int rank(int k) {
+        cIt u = node_begin();
+        cIt end = node_end();
+        int rk = 1;
+
+        while(u != end) {
+            It ls = lson(u);
+            It rs = rson(u);
+
+            if(k <= (*u)->k) {
+                u = ls;
+            } else {
+                rk += (*u)->cnt + md(ls).size;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+                u = rs;
+            }
+        }
+        return rk;
+    }
+
+#undef nd
+#undef lson
+#undef rson
+#undef md
+#undef rmd
+};
+
+class BT : public tree<Node, null_type, less<Node>, rb_tree_tag, TreeUpdate> {
+private:
+    using Base = tree<Node, null_type, less<Node>, rb_tree_tag, TreeUpdate>;
+    typedef Base::iterator It;
+
+    void update(It node) {
+        update_to_top(node.m_p_nd, this);
+    }
+
+public:
+    /*
+     * 插入 k，重复值累计出现次数
+     */
+    void insert(int k) {
+        It it = lower_bound({k, 0});
+        if(it != end() && it->k == k) {
+            ++(it->cnt);
+            update(it);
+        } else {
+            Base::insert({k, 1});
+        }
+    }
+
+    /*
+     * 删除一个 k
+     */
+    void erase(int k) {
+        auto it = lower_bound(Node{k, 0});
+        if(it != end() && it->cnt > 1) {
+            --(it->cnt);
+            update(it);
+        } else {
+            Base::erase(it);
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+        }
+    }
+};
+
+BT bt;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, m, num;
+    cin >> n >> m;
+
+    for(int i = 1; i <= n; i++) {
+        cin >> num;
+        bt.insert(num);
+    }
+
+    int op, x, last = 0, ans = 0;
+    while(m--) {
+        cin >> op >> x;
+        x ^= last;
+        if(op == 1) {
+            bt.insert(x);
+        } else if(op == 2) {
+            bt.erase(x);
+        } else if(op == 3) {
+            last = bt.rank(x);
+            ans ^= last;
+        } else if(op == 4) {
+            last = bt.kth(x);
+            ans ^= last;
+        } else if(op == 5) {
+            last = (--bt.lower_bound({x, 0}))->k;
+            ans ^= last;
+        } else if(op == 6) {
+            last = (bt.upper_bound({x, 0}))->k;
+            ans ^= last;
+        }
+    }
+    cout << ans << '\n';
+}
+\end{codeline}
+\begin{warnbox}
+PBDS 版本用 \texttt{TreeNode} 维护子树 size；\texttt{erase} 前必须确认元素存在。
+\end{warnbox}
+
+\section{笛卡尔树}
+\entrymeta{$O(n)$}
+\begin{codeline}
+const int N = 10000005;
+
+class Node {
+public:
+    int x;
+    int l, r;
+};
+
+Node node[N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+
+    int n;
+    cin >> n;
+    stack<int> st;
+    long long ansl = 0, ansr = 0;
+    for(int i = 1; i <= n; i++) {
+        cin >> node[i].x;
+        int lst = 0;
+        while(!st.empty() && node[st.top()].x > node[i].x) {
+            lst = st.top();
+            ansl ^= lst * (node[lst].l + 1ll);
+            ansr ^= lst * (node[lst].r + 1ll);
+            st.pop();
+        }
+        if(!st.empty()) {
+            node[st.top()].r = i;
+        }
+        node[i].l = lst;
+        st.push(i);
+    }
+    while(!st.empty()) {
+        ansl ^= st.top() * (node[st.top()].l + 1ll);
+        ansr ^= st.top() * (node[st.top()].r + 1ll);
+        st.pop();
+    }
+    cout << ansl << ' ' << ansr << endl;
+}
+\end{codeline}
+\begin{warnbox}
+单调栈建树；下标从 1 开始。
+\end{warnbox}
+
+
+\chapter{分块}
+
+\section{块状数组}
+\entrymeta{$O(\sqrt n)$ 单次}
+\begin{codeline}
+const int N = 200005;
+class BlockArray {
+private:
+    long long arr[N];
+    long long idx[N];
+    long long tag[500];
+    long long n, S, bn;
+
+    void bsort(long long b) {
+        sort(idx + b * S,
+             min(idx + (b + 1) * S, idx + n + 1),
+             [this](long long A, long long B) {
+                 return arr[A] < arr[B];
+             });
+    }
+
+    long long bget(long long b, long long x) {
+        return lower_bound(idx + b * S,
+                           min(idx + (b + 1) * S, idx + n + 1),
+                           x,
+                           [this](long long A, long long B) {
+                               return arr[A] < B;
+                           }) -
+               (idx + b * S);
+    }
+
+public:
+    /*
+     * 读入size个元素并初始化分块
+     */
+    void build(int size) {
+        n = size;
+        S = max(1ll, (long long)sqrt(n));
+        bn = n / S + 1;
+        for(long long i = 1; i <= n; i++) {
+            cin >> arr[i];
+            idx[i] = i;
+        }
+
+        for(long long i = 0; i < bn; i++) {
+            bsort(i);
+        }
+    }
+
+    /*
+     * 将闭区间[l,r]的元素加x
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+     */
+    void add(long long l, long long r, long long x) {
+        long long lb = l / S;
+        long long rb = r / S;
+
+        if(lb == rb) {
+            for(long long i = l; i <= r; i++) {
+                arr[i] += x;
+            }
+            bsort(lb);
+        } else {
+            for(long long i = l; i < (lb + 1) * S; i++) {
+                arr[i] += x;
+            }
+            bsort(lb);
+            for(long long i = lb + 1; i < rb; i++) {
+                tag[i] += x;
+            }
+            for(long long i = rb * S; i <= r; i++) {
+                arr[i] += x;
+            }
+            bsort(rb);
+        }
+    }
+
+    /*
+     * 统计闭区间[l,r]中小于x的元素个数
+     */
+    long long count(long long l, long long r, long long x) {
+        long long lb = l / S;
+        long long rb = r / S;
+        long long cnt = 0;
+
+        if(lb == rb) {
+            for(long long i = l; i <= r; i++) {
+                cnt += arr[i] + tag[lb] < x;
+            }
+        } else {
+            for(long long i = l; i < (lb + 1) * S; i++) {
+                cnt += arr[i] + tag[lb] < x;
+            }
+            for(long long i = lb + 1; i < rb; i++) {
+                cnt += bget(i, x - tag[i]);
+            }
+            for(long long i = rb * S; i <= r; i++) {
+                cnt += arr[i] + tag[rb] < x;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+            }
+        }
+        return cnt;
+    }
+
+};
+
+BlockArray ba;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    long long n, q;
+    cin >> n;
+    q = n;
+    ba.build(n);
+    long long op;
+    long long l, r, x;
+    while(q--) {
+        cin >> op;
+        cin >> l;
+        cin >> r;
+        cin >> x;
+
+        if(op == 0) {
+            ba.add(l, r, x);
+        }
+        if(op == 1) {
+            cout << (ba.count(l, r, x * x)) << '\n';
+        }
+    }
+}
+\end{codeline}
+\begin{codeline}
+const int N = 300005;
+const int SQRTN = 600;
+const long long INF = 1LL << 60;
+class BlockArray {
+private:
+    int arr[N];
+    long long eq[SQRTN];
+    long long tag[SQRTN];
+    int n, S, bn;
+
+    void push_down(int b) {
+        if(tag[b] != INF) {
+            int r = min(n, (b + 1) * S - 1);
+            for(int j = b * S; j <= r; j++) {
+                arr[j] = tag[b];
+            }
+            tag[b] = INF;
+        }
+    }
+
+    int bget(int l, int r, int x) {
+        int lb = l / S, rb = r / S, ans = 0;
+        if(lb == rb) {
+            if(eq[lb] == x) {
+                return r - l + 1;
+            } else if(eq[lb] != INF) {
+                if(r - l + 1 == S) {
+                    eq[lb] = tag[lb] = x;
+                } else {
+                    push_down(lb);
+                    eq[lb] = tag[lb] = INF;
+                    for(int i = l; i <= r; i++) {
+                        arr[i] = x;
+                    }
+                }
+                return 0;
+            } else {
+                for(int i = l; i <= r; i++) {
+                    ans += arr[i] == x;
+                    arr[i] = x;
+                }
+                eq[lb] = r - l + 1 == S ? x : INF;
+                tag[lb] = INF;
+                return ans;
+            }
+        } else {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            return 0;
+        }
+    }
+
+public:
+    /*
+     * 读入size个元素并初始化分块
+     */
+    void build(int size) {
+        n = size;
+        S = max(1, (int)sqrt(n));
+        bn = n / S + 1;
+        for(int i = 1; i <= n; i++) {
+            cin >> arr[i];
+        }
+        arr[0] = 0;
+        for(int i = 0; i < bn; i++) {
+            eq[i] = arr[i * S];
+            tag[i] = INF;
+        }
+        eq[bn] = tag[bn] = INF;
+        for(int i = 0; i <= n; i++) {
+            if(arr[i] != eq[i / S]) {
+                eq[i / S] = INF;
+            }
+        }
+    }
+
+    /*
+     * 统计闭区间[l,r]中等于x的元素个数，并将该区间赋为x
+     */
+    int get(int l, int r, int x) {
+        int lb = l / S, rb = r / S, ans = 0;
+        if(lb == rb) {
+            return bget(l, r, x);
+        } else {
+            ans += bget(l, (lb + 1) * S - 1, x);
+            for(int i = lb + 1; i < rb; i++) {
+                ans += bget(i * S, (i + 1) * S - 1, x);
+            }
+            ans += bget(rb * S, r, x);
+            return ans;
+        }
+    }
+};
+
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+BlockArray ba;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n;
+    q = n;
+    ba.build(n);
+    int op;
+    int l, r, x;
+    while(q--) {
+        cin >> l;
+        cin >> r;
+        cin >> x;
+        cout << (ba.get(l, r, x)) << '\n';
+    }
+}
+\end{codeline}
+\begin{codeline}
+const int N = 100005;
+const int SQRTN = 320;
+const int INF = 0x7FFFFFFF;
+
+int cnt[N];
+
+class BlockArray {
+private:
+    int inv[N];
+    int arr[N];
+    int pre[SQRTN][N];
+    int mode[SQRTN][SQRTN];
+    int n, S, bn;
+
+public:
+    /*
+     * 读入size个元素并初始化分块
+     */
+    void build(int size) {
+        n = size;
+        S = max(1, (int)sqrt(n));
+        bn = n / S + 1;
+        for(int i = 1; i <= n; i++) {
+            cin >> arr[i];
+            inv[i] = arr[i];
+        }
+
+        sort(inv + 1, inv + 1 + n);
+        int len = unique(inv + 1, inv + 1 + n) - inv - 1;
+        for(int i = 1; i <= n; i++) {
+            arr[i] = lower_bound(inv + 1, inv + len + 1, arr[i]) - inv;
+        }
+
+        for(int b = 0; b < bn; b++) {
+            if(b) {
+                for(int i = 1; i <= len; i++) {
+                    pre[b][i] = pre[b - 1][i];
+                }
+            }
+            for(int i = b * S; i < min((b + 1) * S, n + 1); i++) {
+                pre[b][arr[i]]++;
+            }
+        }
+
+        for(int lb = 0; lb < bn; lb++) {
+            int maxi = 0;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            for(int rb = lb; rb < bn; rb++) {
+                if(rb > lb) {
+                    mode[lb][rb] = mode[lb][rb - 1];
+                }
+                for(int i = rb * S; i < min((rb + 1) * S, n + 1); i++) {
+                    int v = arr[i];
+                    int ans = pre[rb][v];
+                    if(lb) {
+                        ans -= pre[lb - 1][v];
+                    }
+                    if(ans > maxi || ans == maxi && v < mode[lb][rb]) {
+                        mode[lb][rb] = v;
+                        maxi = ans;
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     * 查询闭区间[l,r]的众数，出现次数相同取较小值
+     */
+    int get(int l, int r) {
+        int lb = l / S, rb = r / S;
+        int maxi = 0;
+        int ans = 0;
+        if(lb == rb) {
+            for(int i = l; i <= r; i++) {
+                cnt[arr[i]] = 0;
+            }
+            for(int i = l; i <= r; i++) {
+                ++cnt[arr[i]];
+                if(cnt[arr[i]] > maxi || cnt[arr[i]] == maxi && arr[i] < ans) {
+                    maxi = cnt[arr[i]];
+                    ans = arr[i];
+                }
+            }
+        } else {
+            for(int i = l; i <= (lb + 1) * S; i++) {
+                cnt[arr[i]] = pre[rb - 1][arr[i]] - pre[lb][arr[i]];
+            }
+            for(int i = rb * S; i <= r; i++) {
+                cnt[arr[i]] = pre[rb - 1][arr[i]] - pre[lb][arr[i]];
+            }
+            maxi = cnt[mode[lb + 1][rb - 1]] = pre[rb - 1][mode[lb + 1][rb - 1]] - pre[lb][mode[lb + 1][rb - 1]];
+            ans = mode[lb + 1][rb - 1];
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+            for(int i = l; i < (lb + 1) * S; i++) {
+                ++cnt[arr[i]];
+                if(cnt[arr[i]] > maxi || cnt[arr[i]] == maxi && arr[i] < ans) {
+                    maxi = cnt[arr[i]];
+                    ans = arr[i];
+                }
+            }
+            for(int i = rb * S; i <= r; i++) {
+                ++cnt[arr[i]];
+                if(cnt[arr[i]] > maxi || cnt[arr[i]] == maxi && arr[i] < ans) {
+                    maxi = cnt[arr[i]];
+                    ans = arr[i];
+                }
+            }
+        }
+        return inv[ans];
+    }
+};
+
+BlockArray ba;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n;
+    q = n;
+    ba.build(n);
+    int l, r;
+    while(q--) {
+        cin >> l;
+        cin >> r;
+        cout << (ba.get(l, r)) << '\n';
+    }
+}
+\end{codeline}
+\begin{warnbox}
+块长 \texttt{S = max(1, sqrt(n))}；区间众数版本的 \texttt{pre} 按 n ≤ 1e5 开。
+\end{warnbox}
+
+\section{树分块}
+\entrymeta{$O(\sqrt n)$}
+\begin{codeline}
+const int W = 64;
+const int N = 40005;
+const int LOGN = 17;
+int cvt[N];
+
+class Tree {
+public:
+    int S;
+    class Node {
+    public:
+        int c, d;
+        int p;
+        int fa[LOGN];
+        vector<int> oe;
+    };
+
+    class VNode {
+    public:
+        int fa;
+        vector<int> oe;
+        vector<bitset<N>> bm;
+    };
+
+    Node node[N];
+    VNode vnode[N];
+
+    /*
+     * 添加无向边(u,v)
+     */
+    void add(int u, int v) {
+        node[u].oe.push_back(v);
+        node[v].oe.push_back(u);
+    }
+
+    /*
+     * 以1为根建立树分块和倍增信息
+     */
+    void build(int n) {
+        S = sqrt(n) / W * W;
+        dfs1(1);
+        for(int i = 1; i < LOGN; i++) {
+            for(int j = 1; j <= n; j++) {
+                node[j].fa[i] = node[node[j].fa[i - 1]].fa[i - 1];
+            }
+        }
+        dfs2(1);
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    }
+
+    /*
+     * 返回x、y的最近公共祖先
+     */
+    int getLCA(int x, int y) {
+        if(node[x].d < node[y].d) {
+            swap(x, y);
+        }
+        for(int i = LOGN - 1; i >= 0 && node[x].d > node[y].d; i--) {
+            if(node[x].d >= node[y].d + (1 << i)) {
+                x = node[x].fa[i];
+            }
+        }
+        if(x == y) {
+            return x;
+        } else {
+            for(int i = LOGN - 1; i >= 0; i--) {
+                if(node[x].fa[i] != node[y].fa[i]) {
+                    x = node[x].fa[i];
+                    y = node[y].fa[i];
+                }
+            }
+            return node[x].fa[0];
+        }
+    }
+
+    void dfs1(int r) {
+        node[r].d = 1;
+        stack<int> st;
+        st.push(r);
+        while(!st.empty()) {
+            int u = st.top(), p = node[u].p;
+            st.pop();
+            if(node[u].d % S == 1) {
+                vnode[p].oe.push_back(u);
+                vnode[u].fa = p;
+                p = node[u].p = u;
+            }
+            for(int v : node[u].oe) {
+                if(v != node[u].fa[0]) {
+                    node[v].fa[0] = u;
+                    node[v].d = node[u].d + 1;
+                    node[v].p = p;
+                    st.push(v);
+                }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+            }
+        }
+    }
+
+    void dfs2(int r) {
+        stack<int> st;
+        st.push(r);
+        while(!st.empty()) {
+            int u = st.top(), fa = u;
+            st.pop();
+            vnode[u].bm.emplace_back();
+            do {
+                fa = node[fa].fa[0];
+                vnode[u].bm[0][node[fa].c] = true;
+            } while(fa != vnode[u].fa);
+            for(auto& bm : vnode[vnode[u].fa].bm) {
+                vnode[u].bm.emplace_back(vnode[u].bm[0] | bm);
+            }
+            for(int v : vnode[u].oe) {
+                st.push(v);
+            }
+        }
+    }
+
+    /*
+     * 查询x到y路径上的不同颜色数
+     */
+    int query(int x, int y) {
+        int lca = getLCA(x, y);
+        bitset<N> ans;
+        for(int i = 1; i <= 2; i++, swap(x, y)) {
+            if(node[lca].p != node[x].p) {
+                int x0 = node[x].p;
+                while(x != node[x].p && node[x].d > node[lca].d) {
+                    ans[node[x].c] = true;
+                    x = node[x].fa[0];
+                }
+                ans[node[x].c] = true;
+                while((node[vnode[x].fa].d >= node[lca].d)) {
+                    x = vnode[x].fa;
+                }
+                if(x0 != x) {
+                    ans |= vnode[x0].bm[(node[x0].d - node[x].d) / S - 1];
+                }
+            }
+            while(x != lca) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+                ans[node[x].c] = true;
+                x = node[x].fa[0];
+            }
+        }
+        ans[node[lca].c] = true;
+        return ans.count();
+    }
+};
+
+Tree tree;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, m, c;
+    cin >> n;
+    cin >> m;
+
+    for(int i = 1; i <= n; i++) {
+        cin >> c;
+        cvt[i] = c;
+        tree.node[i].c = c;
+    }
+    sort(cvt + 1, cvt + n + 1);
+    int C = unique(cvt + 1, cvt + n + 1) - cvt - 1;
+    for(int i = 1; i <= n; i++) {
+        tree.node[i].c = lower_bound(cvt + 1, cvt + 1 + C, tree.node[i].c) - cvt;
+    }
+
+    int u, v;
+    for(int i = 1; i < n; i++) {
+        cin >> u;
+        cin >> v;
+        tree.add(u, v);
+    }
+
+    tree.build(n);
+    int lastans = 0;
+    for(int i = 1; i <= m; i++) {
+        cin >> u;
+        cin >> v;
+        u ^= lastans;
+        lastans = tree.query(u, v);
+        cout << (lastans) << '\n';
+    }
+}
+\end{codeline}
+\begin{warnbox}
+按深度分块，块内维护到祖先的 bitset。
+\end{warnbox}
+
+
+\chapter{动态树}
+
+\section{Link-Cut Tree}
+\entrymeta{$O(\log n)$ 均摊}
+Link-Cut Tree 用一组 Splay 辅助树维护森林。下面的通用实现封装了核心操作， 题目只需给出 \texttt{Data}（聚合信息与 \texttt{operator+}）；需要额外维护虚子树等附加信息时， 再重写 \texttt{on\_access} / \texttt{on\_link} 两个钩子。
+
+
+\begin{codeline}
+const int N = 100005;
+
+class Tag {
+public:
+    bool rev;
+};
+
+const Tag TAG_EP = {false};
+const Tag TAG_REV = {true};
+
+/*
+ * 通用 LCT。Data 需提供 operator+ 和默认构造（单位元）；
+ * self 保存节点自身的贡献，data = 左子 + self + 右子。
+ * 需要维护虚子树等附加信息时，重写 on_access / on_link。
+ */
+template <class Data>
+class LinkCutTree {
+public:
+    static const int MAXN = N;
+
+    class Node {
+    public:
+        int son[2];
+        int fa;
+        Data data;
+        Data self;
+        Tag tag;
+
+        void operator+=(const Tag& t) {
+            if(t.rev) {
+                swap(son[0], son[1]);
+                tag.rev ^= t.rev;
+            }
+        }
+    };
+
+    Node node[MAXN];
+
+    /*
+     * 实链切换时的附加维护，默认无操作
+     */
+    virtual void on_access(int, int, int) {
+    }
+
+    /*
+     * 加边后的附加维护，默认无操作
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+     */
+    virtual void on_link(int, int) {
+    }
+
+#define ls(u) (node[u].son[0])
+#define rs(u) (node[u].son[1])
+#define fa(u) (node[u].fa)
+#define data(u) (node[u].data)
+#define tag(u) (node[u].tag)
+
+    bool dir(const int u) {
+        return rs(fa(u)) == u;
+    }
+
+    bool is_root(const int u) {
+        return ls(fa(u)) != u && rs(fa(u)) != u;
+    }
+
+    void push_up(const int u) {
+        data(u) = data(ls(u)) + node[u].self + data(rs(u));
+    }
+
+    void push_down(const int u) {
+        if(ls(u)) {
+            node[ls(u)] += tag(u);
+        }
+        if(rs(u)) {
+            node[rs(u)] += tag(u);
+        }
+        tag(u) = TAG_EP;
+    }
+
+    void update(int u) {
+        vector<int> st{u};
+        for(int v = u; !is_root(v);) {
+            v = fa(v);
+            st.push_back(v);
+        }
+        for(auto it = st.rbegin(); it != st.rend(); ++it) {
+            push_down(*it);
+        }
+    }
+
+    void rot(int u) {
+        int y = fa(u), z = fa(y), k = dir(u), v = node[u].son[!k];
+        if(!is_root(y)) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+            node[z].son[dir(y)] = u;
+        }
+        node[y].son[k] = v;
+        node[u].son[!k] = y;
+        if(v) {
+            fa(v) = y;
+        }
+        fa(y) = u;
+        fa(u) = z;
+        push_up(y);
+        push_up(u);
+    }
+
+    void splay(int u) {
+        update(u);
+        for(int f = fa(u); !is_root(u); rot(u), f = fa(u)) {
+            if(!is_root(f)) {
+                rot(dir(u) == dir(f) ? f : u);
+            }
+        }
+    }
+
+    /*
+     * 打通原树根到 u 的实链
+     */
+    int access(int u) {
+        int v = 0;
+        for(; u; v = u, u = fa(u)) {
+            splay(u);
+            on_access(u, rs(u), v);
+            rs(u) = v;
+            push_up(u);
+        }
+        return v;
+    }
+
+    /*
+     * 将 u 设为所在原树的根
+     */
+    void make_root(int u) {
+        access(u);
+        splay(u);
+        node[u] += TAG_REV;
+    }
+
+    /*
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+     * 返回 u 所在原树的根
+     */
+    int find_root(int u) {
+        access(u);
+        splay(u);
+        push_down(u);
+        while(ls(u)) {
+            u = ls(u);
+            push_down(u);
+        }
+        splay(u);
+        return u;
+    }
+
+    /*
+     * 将 x 到 y 的路径暴露到以 y 为根的辅助树，x、y 须连通
+     */
+    void split(int x, int y) {
+        make_root(x);
+        access(y);
+        splay(y);
+    }
+
+    /*
+     * 连接 x、y；只在两点不连通时加边
+     */
+    void link(int x, int y) {
+        make_root(x);
+        if(find_root(y) != x) {
+            splay(y);
+            fa(x) = y;
+            on_link(x, y);
+            push_up(y);
+        }
+    }
+
+    /*
+     * 断开 x、y 之间的直接边
+     */
+    void cut(int x, int y) {
+        make_root(x);
+        if(find_root(y) == x && fa(y) == x && !ls(y)) {
+            fa(y) = rs(x) = 0;
+            push_up(x);
+        }
+    }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=185]
+
+#undef ls
+#undef rs
+#undef fa
+#undef data
+#undef tag
+};
+\end{codeline}
+
+
+\subsection{P3690 【模板】动态树（LCT）}\label{p3690-ux6a21ux677fux52a8ux6001ux6811lct}
+
+
+\begin{codeline}
+class Data {
+public:
+    int sum;
+
+    Data operator+(const Data& other) const {
+        return {sum ^ other.sum};
+    }
+};
+
+int n, m;
+
+LinkCutTree<Data> lct;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin >> n;
+    cin >> m;
+
+    for(int i = 1; i <= n; i++) {
+        cin >> lct.node[i].self.sum;
+        lct.node[i].data.sum = lct.node[i].self.sum;
+    }
+
+    int op, x, y;
+    while(m--) {
+        cin >> op;
+        cin >> x;
+        cin >> y;
+        if(op == 0) {
+            lct.split(x, y);
+            cout << (lct.node[y].data.sum) << '\n';
+        } else if(op == 1) {
+            lct.link(x, y);
+        } else if(op == 2) {
+            lct.cut(x, y);
+        } else if(op == 3) {
+            lct.make_root(x);
+            lct.node[x].self.sum = y;
+            lct.push_up(x);
+        }
+    }
+}
+\end{codeline}
+\begin{warnbox}
+\texttt{Data::operator+} 需可交换（反转只交换儿子，不重算自身）；动态重心需重写 \texttt{on\_access} / \texttt{on\_link}。
+\end{warnbox}
+
+
+\chapter{其他结构}
+
+\section{KD-Tree}
+\entrymeta{$O(\sqrt n)$ 期望}
+\begin{codeline}
+const int64 INF = 0x3f3f3f3f3f3f3f3f;
+const int N = 400005;
+const int KD = 2;
+int64 n;
+
+class Point {
+public:
+    int64 coord[KD];
+};
+Point point[N];
+
+class Node {
+public:
+    int l, r;
+    int64 coord[KD];
+    int64 min_coord[KD];
+    int64 max_coord[KD];
+};
+
+bool cmp0(const Point& A, const Point& B) {
+    return A.coord[0] < B.coord[0];
+}
+
+bool cmp1(const Point& A, const Point& B) {
+    return A.coord[1] < B.coord[1];
+}
+
+class KDTree {
+public:
+    static const int MAXN = 400005;
+    int kd = KD;
+    int root = -1;
+    int node_cnt = 0; // 0 for root;
+    Node node[MAXN];
+
+    int64 get_distance_squared(int tgt, int cur) {
+        if(cur == -1) {
+            return INF;
+        }
+        int64 gap, d2 = 0.;
+        for(int i = 0; i < kd; i++) {
+            gap = node[tgt].coord[i] - node[cur].coord[i];
+            d2 += gap * gap;
+        }
+        return d2;
+    }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+
+    int64 potential_min_dis_squared(int tgt, int cur) {
+        if(cur == -1) {
+            return INF;
+        }
+        int64 gap, d2 = 0.;
+        for(int i = 0; i < kd; i++) {
+            if(node[tgt].coord[i] < node[cur].min_coord[i]) {
+                gap = node[cur].min_coord[i] - node[tgt].coord[i];
+            } else if(node[tgt].coord[i] > node[cur].max_coord[i]) {
+                gap = node[tgt].coord[i] - node[cur].max_coord[i];
+            } else {
+                gap = 0;
+            }
+            d2 += gap * gap;
+        }
+        return d2;
+    }
+
+    void init_node(const Point& point, int cur) {
+        for(int i = 0; i < kd; i++) {
+            node[cur].coord[i] =
+                node[cur].min_coord[i] =
+                    node[cur].max_coord[i] = point.coord[i];
+        }
+        node[cur].l = -1;
+        node[cur].r = -1;
+    }
+
+    void push_up(int cur) {
+        for(int i = 0; i < kd; i++) {
+            node[cur].min_coord[i] = node[cur].coord[i];
+            node[cur].max_coord[i] = node[cur].coord[i];
+
+            if(node[cur].l != -1) {
+                node[cur].min_coord[i] = min(node[cur].min_coord[i], node[node[cur].l].min_coord[i]);
+                node[cur].max_coord[i] = max(node[cur].max_coord[i], node[node[cur].l].max_coord[i]);
+            }
+
+            if(node[cur].r != -1) {
+                node[cur].min_coord[i] = min(node[cur].min_coord[i], node[node[cur].r].min_coord[i]);
+                node[cur].max_coord[i] = max(node[cur].max_coord[i], node[node[cur].r].max_coord[i]);
+            }
+        }
+    }
+
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+    /*
+     * 查询所有点对的最小距离平方
+     */
+    int64 batch_query() {
+        int64 cur_ans = INF;
+        int cur;
+        for(int tgt = 0; tgt < node_cnt; tgt++) {
+            stack<int> s;
+            s.push(root);
+
+            while(!s.empty()) {
+                cur = s.top();
+                s.pop();
+                if(tgt == cur || potential_min_dis_squared(tgt, cur) > cur_ans) {
+                    continue;
+                } else {
+                    cur_ans = min(cur_ans, get_distance_squared(tgt, cur));
+                    if(node[cur].l != -1) {
+                        s.push(node[cur].l);
+                    }
+                    if(node[cur].r != -1) {
+                        s.push(node[cur].r);
+                    }
+                }
+            }
+        }
+        return cur_ans;
+    }
+
+    /*
+     * 按维度轮流划分point[range_l..range_r]，返回根节点编号
+     */
+    int build(int range_l, int range_r, int d) {
+        if(range_l == range_r) {
+            init_node(point[range_l], node_cnt);
+            return node_cnt++;
+        } else if(range_l > range_r) {
+            return -1;
+        } else {
+            int node_idx = node_cnt++;
+            int mid = (range_r + range_l) >> 1;
+            int d_idx = d % 2;
+
+            if(d_idx == 0) {
+                nth_element(point + range_l, point + mid, point + range_r, cmp0);
+            } else {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+                nth_element(point + range_l, point + mid, point + range_r, cmp1);
+            }
+            init_node(point[mid], node_idx);
+            node[node_idx].l = build(range_l, mid - 1, d + 1);
+            node[node_idx].r = build(mid + 1, range_r, d + 1);
+            push_up(node_idx);
+            return node_idx;
+        }
+    }
+};
+
+KDTree kdTree;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin >> n;
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < KD; j++) {
+            cin >> point[i].coord[j];
+        }
+    }
+
+    kdTree.root = kdTree.build(0, int(n - 1), 0);
+
+    cout << (kdTree.batch_query());
+}
+\end{codeline}
+\begin{warnbox}
+重构阈值与维度相关；最近点对需要剪枝。
+\end{warnbox}
+
+\section{可持久化字典树}
+\entrymeta{$O(\log V)$}
+MAXH为1..64，num和x为MAXH位无符号整数。查询排名不超过两个版本的计数差。
+
+
+\begin{codeline}
+template <int MAXH = 32>
+class PersistentTrie {
+public:
+    class Node {
+    public:
+        int son[2]{};
+        int cnt = 0;
+    };
+    int ncnt;
+    vector<Node> node;
+    vector<int> root;
+
+    /*
+     * 初始化，版本0为空Trie
+     * n为预计插入次数，用于预留空间
+     */
+    void init(int n = 0) {
+        ncnt = 0;
+        node.assign(1, Node());
+        node.reserve(size_t(n) * (MAXH + 1) + 1);
+        root.assign(1, 0);
+    }
+    int getNode(int lst) {
+        node.push_back(node[lst]);
+        node[++ncnt].cnt++;
+        return ncnt;
+    }
+    /*
+     * 在版本ver上插入num，返回新版本号
+     * 原版本保持不变
+     */
+    int push(int ver, uint64 num) {
+        int u = getNode(root[ver]);
+        root.push_back(u);
+        for(int d = MAXH - 1; d >= 0; d--) {
+            int c = (num >> d) & 1;
+            int v = getNode(node[u].son[c]);
+            node[u].son[c] = v;
+            u = v;
+        }
+        return int(root.size()) - 1;
+    }
+    /*
+     * 版本vr减去版本vl后的Trie，与x异或后第k大的原数
+     * 左开右闭，vl为vr的祖先版本，k从1开始
+     */
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    uint64 getKth(int vl, int vr, uint64 x, int k = 1) const {
+        int l = root[vl], r = root[vr];
+        uint64 res = 0;
+        for(int d = MAXH - 1; d >= 0; d--) {
+            int c = ((x >> d) & 1) ^ 1;
+            int cnt = node[node[r].son[c]].cnt - node[node[l].son[c]].cnt;
+            if(k > cnt) {
+                k -= cnt;
+                c ^= 1;
+            }
+            res |= uint64(c) << d;
+            l = node[l].son[c];
+            r = node[r].son[c];
+        }
+        return res;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+版本区间查询用 \texttt{root[r] - root[l-1]}。
+\end{warnbox}
+
+\section{ST 表}
+\entrymeta{$O(n\log n)$ 建表，$O(1)$ 查询}
+\begin{codeline}
+template <int n>
+class SparseTable {
+public:
+    static constexpr int logn = 32 - __builtin_clz(n);
+    int64 st[logn][n + 1]{};
+    /*
+     * 由st[0][1..n]预处理区间最大值
+     */
+    void calc() {
+        for(int j = 1; j < logn; j++) {
+            for(int i = 1; i + (1 << j) - 1 <= n; i++) {
+                st[j][i] = max(st[j - 1][i], st[j - 1][i + (1 << (j - 1))]);
+            }
+        }
+    }
+    /*
+     * 查询闭区间[l,r]的最大值
+     */
+    int64 query(int l, int r) const {
+        int k = 31 - __builtin_clz(r - l + 1);
+        return max(st[k][l], st[k][r - (1 << k) + 1]);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+\texttt{logn = 32 - \_\_builtin\_clz(n)}；要求 n ≥ 1。
+\end{warnbox}
+

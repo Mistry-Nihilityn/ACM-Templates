@@ -1,0 +1,153 @@
+% ---------------------------------------------------------------- 版面
+\usepackage{geometry}
+\geometry{
+  paper=a4paper,
+  twoside,
+  inner=2.25cm, outer=1.45cm,
+  top=1.85cm, bottom=1.75cm,
+  headsep=0.42cm, footskip=0.75cm
+}
+
+\usepackage{xcolor}
+\definecolor{ink}{gray}{0.08}
+\definecolor{linecol}{gray}{0.45}
+\definecolor{shadebox}{gray}{0.94}
+\definecolor{shadecode}{gray}{0.965}
+\definecolor{mainblue}{RGB}{26,64,110}
+\definecolor{accent}{RGB}{150,52,40}
+\definecolor{coderule}{RGB}{70,100,140}
+
+\usepackage{amsmath,amssymb}
+\usepackage{calc}
+\providecommand{\lt}{<}
+\providecommand{\gt}{>}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=mainblue,urlcolor=accent,citecolor=mainblue,
+  bookmarksnumbered=true,bookmarksopen=true]{hyperref}
+
+\setmonofont{JetBrains Mono}[Scale=0.86]
+
+\usepackage{newunicodechar}
+\newunicodechar{≥}{\ensuremath{\ge}}
+\newunicodechar{≤}{\ensuremath{\le}}
+\newunicodechar{≠}{\ensuremath{\ne}}
+\newunicodechar{→}{\ensuremath{\to}}
+\newunicodechar{•}{\textbullet}
+\newunicodechar{―}{\textemdash}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{δ}{\ensuremath{\delta}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{θ}{\ensuremath{\theta}}
+\newunicodechar{λ}{\ensuremath{\lambda}}
+\newunicodechar{μ}{\ensuremath{\mu}}
+\newunicodechar{π}{\ensuremath{\pi}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{φ}{\ensuremath{\phi}}
+\newunicodechar{ω}{\ensuremath{\omega}}
+\newunicodechar{Σ}{\ensuremath{\Sigma}}
+\newunicodechar{Ω}{\ensuremath{\Omega}}
+\newunicodechar{∞}{\ensuremath{\infty}}
+\newunicodechar{√}{\ensuremath{\sqrt{}}}
+\setlength{\emergencystretch}{2.5em}
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize\setlength{\tabcolsep}{3pt}}
+\setlength{\parskip}{0pt}
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
+
+% ---------------------------------------------------------------- 代码
+\fvset{fontsize=\footnotesize,breaklines=true,breakanywhere=true}
+\renewcommand{\theFancyVerbLine}{\ttfamily\scriptsize\color{linecol}\arabic{FancyVerbLine}}
+\DefineVerbatimEnvironment{codeline}{Verbatim}{%
+  fontsize=\footnotesize,
+  breaklines=true,
+  breakanywhere=true,
+  numbers=left,
+  numbersep=3pt,
+  frame=leftline,
+  framerule=0.45pt,
+  framesep=2.2mm,
+  rulecolor=\color{coderule},
+  xleftmargin=0pt
+}
+
+% ---------------------------------------------------------------- 提示框
+\newtcolorbox{warnbox}{
+  enhanced, breakable,
+  colback=accent!4, colframe=accent!85!black,
+  colbacktitle=accent!85!black, coltitle=white,
+  fonttitle=\bfseries\small, title=注意,
+  boxrule=0.5pt, arc=1.2pt,
+  left=4pt, right=4pt, top=3pt, bottom=3pt,
+  before skip=6pt, after skip=6pt,
+  fontupper=\small
+}
+
+% ---------------------------------------------------------------- 标题
+\titleformat{\part}[display]
+  {\centering\normalfont\Huge\bfseries\color{mainblue}}
+  {\Large 第\thepart 编}
+  {10pt}
+  {\Huge}
+\titlespacing*{\part}{0pt}{30pt}{24pt}
+
+\titleformat{\chapter}[display]
+  {\raggedright\normalfont\LARGE\bfseries\color{mainblue}}
+  {\normalsize\mdseries\color{mainblue}第\thechapter 章}
+  {5pt}
+  {\LARGE}
+\titlespacing*{\chapter}{0pt}{0pt}{14pt}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{mainblue}}
+  {\thesection}{0.55em}{}
+\titlespacing*{\section}{0pt}{13pt plus 2pt minus 1pt}{5pt}
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}
+  {\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{8pt plus 2pt minus 1pt}{3pt}
+
+% ---------------------------------------------------------------- 页眉页脚
+\setlength{\headheight}{24pt}
+\setlength{\headsep}{0.32cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\thepage}
+\fancyhead[RE]{\small\nouppercase{\leftmark}}
+\fancyhead[CE]{\small\itshape MST: My Solution of Templates}
+\fancyhead[LO]{\small\nouppercase{\rightmark}}
+\fancyhead[RO]{\small\thepage}
+\fancyhead[CO]{\includegraphics[width=0.12\textwidth]{assets/icpclogoz.png}}
+\renewcommand{\headrulewidth}{0.35pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{mainblue}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyhead[LE]{\small\thepage}%
+  \fancyhead[RO]{\small\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
+
+% ---------------------------------------------------------------- 杂项
+\setcounter{tocdepth}{1}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\partname}{第}
+\setlength{\columnsep}{1.5em}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\newcommand{\entrymeta}[1]{%
+  \noindent{\color{accent}\rule[-0.18em]{2.8pt}{1.05em}}\quad
+  {\small\textbf{时间复杂度}}\quad #1\par\smallskip}
+\newcommand{\secref}[1]{\hyperref[#1]{\textsf{#1}}}

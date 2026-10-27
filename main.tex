@@ -1,0 +1,46 @@
+% !TEX program = xelatex
+\documentclass[10pt,a4paper,twoside,openany,fontset=windows]{ctexbook}
+\input{preamble}
+
+\begin{document}
+
+% ---------------------------------------------------------------- 封面
+\begin{titlepage}
+  \thispagestyle{empty}
+  \centering
+  \vspace*{0.08\textheight}
+  \includegraphics[width=0.50\textwidth]{assets/icpclogo.png}\\[2em]
+
+  {\heiti\Huge\bfseries MST: My Solution of Templates\par}
+  \vspace{0.5cm}
+  {\heiti\Large\underline{ACM Template Notes}\par}
+  \vspace{0.5cm}
+  {\kaishu\large 算法竞赛模板库\par}
+  \vspace{1.0cm}
+
+  {\kaishu\Large HFUT \& HDU\par}
+  \vspace{0.5cm}
+  {\kaishu\Large Mistry Nihilityn\par}
+  \vspace{1.0cm}
+
+  {\large \today\par}
+  \vfill
+\end{titlepage}
+
+% ---------------------------------------------------------------- 目录
+\frontmatter
+\tableofcontents
+
+% ---------------------------------------------------------------- 正文
+\mainmatter
+\input{chapters/part1}
+\input{chapters/part2}
+\input{chapters/part3}
+\input{chapters/part4}
+\input{chapters/part5}
+\input{chapters/part6}
+
+\appendix
+\input{chapters/appendix}
+
+\end{document}
