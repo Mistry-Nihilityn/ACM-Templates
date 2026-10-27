@@ -6,6 +6,13 @@
 
 [ACMNotes.pdf](ACMNotes.pdf)
 
+## 样本
+
+两份出行/参赛手册，可作为排版与信息组织的参考（人名已匿名化）：
+
+- [CCSP 2026 出行手册](CCSP2026.pdf) · [LaTeX 源文件](CCSP2026.tex)
+- [ICPC 2026 成都参赛手册](ICPC2026Chengdu.pdf) · [LaTeX 源文件](ICPC2026Chengdu.tex)
+
 ## 编译
 
 需要 XeLaTeX、ctex 宏包与 JetBrains Mono 字体：

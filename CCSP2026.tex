@@ -1,0 +1,567 @@
+% !TEX program = xelatex
+% 2026 CCF CCSP 竞赛出行手册
+% 编译：latexmk -xelatex CCSP2026.tex   或   xelatex CCSP2026.tex（跑两遍出目录）
+\documentclass[11pt,a4paper,fontset=windows]{ctexart}
+
+\usepackage[margin=2.1cm,top=2.4cm,bottom=2.2cm]{geometry}
+% 注意：不能用 xcolor 的 table 选项（会加载 colortbl）。
+% 本机 MiKTeX 的 array.sty(2023) 与 colortbl.sty(2026/05 v1.0l) 版本错配，
+% \rowcolor 会调用新版 array 才有的内部宏而报错。表格改用 booktabs 描线 + 彩色粗体表头。
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{enumitem}
+\usepackage{amssymb}      % \checkmark \square
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage[colorlinks=true,linkcolor=main,urlcolor=accent,bookmarksnumbered]{hyperref}
+\usepackage{graphicx}
+
+% ---------- 配色 ----------
+\definecolor{main}{HTML}{1F4E79}      % 主色：深蓝
+\definecolor{mainlite}{HTML}{2E75B6}  % 主色浅
+\definecolor{accent}{HTML}{C00000}    % 强调：红
+\definecolor{warnbg}{HTML}{FDF1E7}    % 警示底
+\definecolor{okbg}{HTML}{EBF5EE}      % 提示底
+\definecolor{infobg}{HTML}{EAF1F8}    % 信息底
+\definecolor{rowalt}{HTML}{F4F8FC}    % 表格隔行
+\definecolor{graytx}{HTML}{595959}
+
+% ---------- 表格 ----------
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\thd}[1]{\textbf{\color{main}#1}}   % 表头：主色粗体（不用 colortbl 底色）
+\newcommand{\subhd}[1]{\textbf{\color{graytx}#1}}
+\newcommand{\warnmark}{\textcolor{accent}{\rule[0.12em]{0.52em}{0.52em}}}  % 替代 ⚠（拉丁字体无此字形）
+
+% ---------- 标题样式 ----------
+\titleformat{\section}{\normalfont\Large\bfseries\color{main}}{\thesection}{0.7em}{}[\vspace{-0.5em}\color{main}\rule{\textwidth}{1.1pt}]
+\titleformat{\subsection}{\normalfont\large\bfseries\color{mainlite}}{\thesubsection}{0.6em}{}
+\titlespacing{\section}{0pt}{1.5em}{0.6em}
+\titlespacing{\subsection}{0pt}{1.1em}{0.4em}
+
+% ---------- 页眉页脚 ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{graytx}2026 CCF CCSP 出行手册}
+\fancyhead[R]{\small\color{graytx}合肥 $\rightarrow$ 成都}
+\fancyfoot[C]{\small\color{graytx}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---------- 自定义盒子 ----------
+\newtcolorbox{keybox}[1][]{
+  colback=infobg, colframe=main, boxrule=0pt, leftrule=3.5pt,
+  arc=1.5pt, left=8pt, right=8pt, top=6pt, bottom=6pt, #1}
+\newtcolorbox{warnbox}[1][]{
+  colback=warnbg, colframe=accent, boxrule=0pt, leftrule=3.5pt,
+  arc=1.5pt, left=8pt, right=8pt, top=6pt, bottom=6pt, #1}
+\newtcolorbox{okbox}[1][]{
+  colback=okbg, colframe=green!45!black, boxrule=0pt, leftrule=3.5pt,
+  arc=1.5pt, left=8pt, right=8pt, top=6pt, bottom=6pt, #1}
+
+% 逐日行程表用的小标题
+\newcommand{\daytitle}[2]{%
+  \vspace{0.7em}
+  {\large\bfseries\color{white}\colorbox{main}{\strut\ \ #1\ \ \normalsize #2\ \ }}%
+  \vspace{0.35em}\par}
+
+\begin{document}
+
+% ============================================================
+% 封面
+% ============================================================
+\thispagestyle{empty}
+\vspace*{2.8cm}
+\begin{center}
+  {\color{mainlite}\rule{\textwidth}{2pt}}\\[0.85em]
+  {\Huge\bfseries\color{main} CCSP 2026}\\[0.45em]
+  {\LARGE\bfseries 出\hspace{0.35em}行\hspace{0.35em}手\hspace{0.35em}册}\\[0.85em]
+  {\color{mainlite}\rule{\textwidth}{2pt}}
+\end{center}
+
+\vspace{2.4cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{@{}r@{\hspace{2.2em}}l@{}}
+\subhd{文档名称}     & 2026 CCF CCSP 竞赛出行手册\\[0.15em]
+\subhd{文档版本}     & v1.0\\[0.15em]
+\subhd{编\hspace{1em}制} & XCPC 集训队\\[0.15em]
+\subhd{编制日期}     & 2026 年 10 月 9 日\\[0.15em]
+\subhd{最近更新}     & 2026 年 10 月 9 日\\[0.15em]
+\subhd{赛事名称}     & 2026 CCF 大学生计算机系统与程序设计竞赛\\[0.15em]
+\subhd{主办承办}     & 中国计算机学会（CCF）主办 · 西华大学承办\\[0.15em]
+\subhd{赛程日期}     & 2026 年 10 月 21 日 至 10 月 22 日\\[0.15em]
+\subhd{往返日期}     & 2026 年 10 月 20 日 至 10 月 23 日\\
+\end{tabular}
+\end{center}
+
+\vfill
+\begin{center}
+{\color{mainlite}\rule{0.45\textwidth}{0.6pt}}\\[0.6em]
+{\small\color{graytx} 编制单位：合肥工业大叔队 \quad 编制日期：2026 年 10 月 9 日}
+\end{center}
+\newpage
+
+% ============================================================
+% 目录
+% ============================================================
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{一页速查}
+% ============================================================
+
+\begin{keybox}
+\textbf{\color{main}三件最重要的事}
+
+\vspace{0.4em}
+\textbf{1. 比赛时间}：10 月 21 日 \textbf{09:00--21:00}，共 \textbf{12 小时}，中途不离场。
+
+\vspace{0.25em}
+\textbf{2. 比赛地点}：西华大学（郫都校区），成都市郫都区红光大道 9999 号。
+
+\vspace{0.25em}
+\textbf{3. \warnmark 今年新规：}
+\href{https://www.ccf.org.cn/ccsp/tzgg/2026-09-14/932132.shtml}%
+{\textbf{禁止携带 U 盘等任何电子存储设备}}（详见 \ref{sec:rules} 节）。
+\textbf{去年允许，今年不允许！}
+\end{keybox}
+
+\vspace{0.8em}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.1cm}L{5.4cm}X@{}}
+\toprule
+\thd{项目} & \thd{内容} & \thd{说明}\\
+\midrule
+比赛日 & 10 月 21 日（周三）09:00--21:00 & 西华大学（郫都校区）\\
+颁奖典礼 & 10 月 22 日（周四）14:00--16:00 & 天府国际会议中心\\
+入住酒店 & 繁洲花园大酒店（四星） & 红光街道广场路北三段 88 号\\
+酒店电话 & 028-87922176 / 15308236858 & 建议提前存手机\\
+距赛场 & 约 1 公里 & 步行约 15 分钟，可打车\\
+去程车次 & G3391 \quad 10:21 $\rightarrow$ 19:01 & 合肥南 $\rightarrow$ 成都南\\
+返程车次 & G1888 \quad 11:51 $\rightarrow$ 21:41 & 成都东 $\rightarrow$ 合肥\\
+成都气温 & 约 13--19\,$^\circ$C{}，多阴雨 & 早晚温差大，见 \ref{sec:remind} 节\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{okbox}
+\textbf{随身必带四件套}：身份证 \quad 学生证 \quad 准考证 \quad 纸质参考资料。\\
+准考证于\textbf{竞赛前 3 个工作日}开放打印，请提前打印纸质版并多备一份。
+\end{okbox}
+
+\newpage
+
+% ============================================================
+\section{竞赛信息}
+% ============================================================
+
+\subsection{基本安排}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.9cm}X@{}}
+\toprule
+\thd{项目} & \thd{内容}\\
+\midrule
+竞赛名称 & 2026 CCF 大学生计算机系统与程序设计竞赛（CCSP）\\
+主办单位 & 中国计算机学会（CCF）\\
+承办单位 & 西华大学\\
+比赛日期 & 2026 年 10 月 21 日（周三）\\
+比赛时间 & 09:00--21:00，共 12 小时，中午不休息、不离场\\
+比赛地点 & 四川省成都市金牛区土桥金周路 999 号 西华大学（郫都校区）\\
+\multirow{2}{*}{颁奖典礼} & 时间：10 月 22 日（周四）14:00--16:00\\
+ & 地点：天府国际会议中心（成都市双流区蜀州路 3333 号，西博城地铁站 E 口步行 60 米）\\
+赛题设置 & 全国赛共 5 题，总分 500 分，每题 100 分\\
+可用语言 & C/C++、Java 或 Python\\
+竞赛方式 & 机考\\
+奖项 & 取全国总排名前 60\%，金银铜奖比例 1:2:3\\
+附加权益 & 可免费参加 10 月 21--24 日在成都举办的 CNCC2026 大会\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{地址说明}：西华大学郫都校区在官方通知中写作「金牛区土桥金周路 999 号」，
+这是历史行政区划遗留的写法；学校现用地址为\textbf{「郫都区红光大道 9999 号」}，
+两者指向同一处校园。打车报地址时\textbf{建议直接用「西华大学郫都校区」}，司机更认这个。
+\end{keybox}
+
+\subsection{今年新规：物品携带}\label{sec:rules}
+
+\begin{warnbox}
+\textbf{\color{accent}\warnmark 与去年不同，请务必看完这一节}
+
+\vspace{0.5em}
+\textbf{依据（点击查看官方原文）：}\\
+\href{https://www.ccf.org.cn/ccsp/tzgg/2026-09-14/932132.shtml}%
+{\textbf{《关于调整 2026 CCF CCSP 竞赛选手可携带资料规定的通知》}}\\
+{\small\color{graytx} CCF 官方发布 · 2026 年 9 月 14 日 · 中国计算机学会 CCSP 竞赛委员会}
+
+\vspace{0.7em}
+\textbf{\color{accent}核心调整：禁止携带任何电子存储设备（U 盘、移动硬盘、存储卡等）；
+允许携带合理数量的纸质参考资料（书籍、打印材料、手写笔记等）。}
+
+\vspace{0.7em}
+\textbf{通知原文要点}
+\begin{itemize}[leftmargin=1.4em,itemsep=0.28em,topsep=0.35em]
+  \item \textbf{禁止}携带任何电子存储设备，包括但不限于 U 盘、移动硬盘、存储卡等。
+  \item \textbf{允许}携带合理数量的纸质参考资料，包括书籍、打印材料、手写笔记等。
+  \item \textbf{仍禁止}携带任何具有计算或通信功能的设备（笔记本电脑、手机、平板电脑、智能穿戴设备等）。
+  \item 键盘、鼠标、有线耳机等不具备存储、计算与通信功能的外设\textbf{仍可携带}，
+        入场时须经监考人员检查确认。
+  \item 此前发布的竞赛章程、竞赛手册中相关条款与本通知不一致的，\textbf{以本通知为准}。
+\end{itemize}
+\end{warnbox}
+
+\vspace{0.4em}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.85cm}L{1.55cm}X@{}}
+\toprule
+\thd{类别} & \thd{能否携带} & \thd{说明}\\
+\midrule
+电子存储设备 & \textcolor{accent}{\textbf{禁止}} & U 盘、移动硬盘、存储卡等，\textbf{任何}形式都不行\\
+纸质参考资料 & \textbf{允许} & 合理数量；书籍、打印材料、手写笔记\\
+计算通信设备 & \textcolor{accent}{\textbf{禁止}} & 笔记本电脑、手机、平板电脑、智能穿戴设备\\
+键鼠、有线耳机 & \textbf{允许} & 须无存储 / 计算 / 通信功能，入场经检查\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\newpage
+
+% ============================================================
+\section{行程总览}
+% ============================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.5cm}L{2.5cm}X@{}}
+\toprule
+\thd{日期} & \thd{关键节点} & \thd{行程主线}\\
+\midrule
+10 月 20 日（周二） & 10:21 发车 / 19:01 抵达 & 合肥 $\rightarrow$ 成都南站 $\rightarrow$ 地铁 $\rightarrow$ 入住酒店\\
+10 月 21 日（周三） & 09:00--21:00 & 酒店 $\rightarrow$ 西华大学，\textbf{正式比赛 12 小时} $\rightarrow$ 酒店\\
+10 月 22 日（周四） & 14:00--16:00 & 酒店 $\rightarrow$ 天府国际会议中心，\textbf{颁奖典礼} $\rightarrow$ 酒店\\
+10 月 23 日（周五） & 11:51 发车 / 21:41 抵达 & 酒店 $\rightarrow$ 成都东站 $\rightarrow$ 合肥\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{住宿跨度}：10 月 20 日、21 日、22 日共三晚，10 月 23 日上午退房。\\
+\textbf{总时长}：10 月 20 日 10:21 出发 $\rightarrow$ 10 月 23 日 21:41 抵达合肥，全程约 3 天半。
+\end{keybox}
+
+% ============================================================
+\section{逐日详细行程}
+% ============================================================
+
+以下时间均为\textbf{计划时间}。地铁、有轨电车的运行时间按正常平峰估算，未包含等车与换乘步行时间，
+\textbf{当天请以高德地图 / 百度地图实时导航为准}。\\[0.3em]
+
+% ---------- Day 1 ----------
+\newpage
+\daytitle{Day 1}{10 月 20 日（周二）· 合肥 $\rightarrow$ 成都}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{1.6cm}L{4.4cm}L{3.5cm}X@{}}
+\toprule
+\thd{时间} & \thd{事项} & \thd{交通方式} & \thd{地点 / 备注}\\
+\midrule
+08:45 & 集合，清点人员与行李 & — & 翡翠湖大北门\\
+08:55 & 步行前往地铁站 & 步行 & 工大翡翠湖校区站（3 号线），约 \textbf{15 分钟}\\
+09:10 & 乘地铁 3 号线 & 地铁 3 号线 & 前往换乘站\\
+09:35 & 换乘 4 号线 & 地铁 4 号线 & \textbf{图书馆站}站内换乘\\
+09:55 & 抵达合肥南站 & — & 出站后按「高铁进站口」指示走\\
+10:00 & 安检、进站、候车 & — & \textbf{检票口 10A}，21 分钟后发车\\
+10:21 & \textbf{G3391 发车} & 高铁 & 合肥南 $\rightarrow$ 成都南\\
+\midrule
+19:01 & 抵达成都南站 & 高铁 & 准点到达\\
+19:05 & 出站，前往地铁站 & 步行 & 站内连通「火车南站」，跟随指示牌\\
+19:18 & 乘 7 号线（内环） & 地铁 7 号线 & 往一品天下方向，乘 9 站\\
+19:40 & \textbf{一品天下站换乘} & 站内换乘 & 换 2 号线，往\textbf{犀浦}方向\\
+19:45 & 乘 2 号线 & 地铁 2 号线 & 乘 7 站\\
+20:00 & 抵达天河路站 & — & 换乘有轨电车（需出站，留足时间）\\
+20:05 & 乘有轨电车蓉 2 号线支线 & 有轨电车 & 往\textbf{仁和}方向\\
+20:28 & 抵达金土站 & 有轨电车 & 酒店最近站点\\
+20:35 & \textbf{抵达繁洲花园大酒店} & 步行 & 办理入住\\
+20:50 & 放下行李、稍作休息 & — & 与前台确认早餐时间与退房时间\\
+21:00 & 「夜宵」 & 步行 & 放松心态应赛\\
+22:30 & 回房休息 & — & 次日为 12 小时比赛，\textbf{务必早睡}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+\textbf{车上历时 8 小时 40 分}：午餐、晚餐均在车上解决，\textbf{请提前备好干粮与饮品}。
+高铁停站一般只有三五分钟，来不及下车买东西；车上餐食又贵又难吃，别指望。
+\end{warnbox}
+
+\begin{keybox}
+\textbf{备选方案（若地铁停运或行李过多）}\\
+成都南站打车直达酒店：约 25 公里，40--50 分钟，约 70--90 元。\\
+两人分摊后与地铁差距不大，\textbf{若列车晚点导致地铁赶不上末班，直接打车}。
+\end{keybox}
+
+\begin{warnbox}
+\textbf{末班车提醒，务必随时看表，别到了才发现没车}\\
+三者末班时间差别很大，\textbf{有轨电车收车最早}：支线（往仁和方向）约 \textbf{22:00} 由新业路发出。
+地铁晚得多，7 号线火车南站内环末班约 \textbf{23:27}，2 号线沿途各站末班普遍在 \textbf{23:00} 之后。\\
+19:01 后若行程延误超过 1 小时，直接打车，不要赌末班车。\\
+{\small\color{graytx} 各线时刻请以站台公告为准，本表按公开时刻表整理。}
+\end{warnbox}
+
+\begin{keybox}
+\textbf{今日不安排签到与领物资}：抵达酒店已 20:35，CCF 签到点通常不会开放到深夜。
+\textbf{CCFLinks 签到、领物资、系统调试统一排在次日赛前}（见 Day 2），今晚只做一件事，\textbf{吃好、早睡}。
+\end{keybox}
+
+% ---------- Day 2 ----------
+\newpage
+\daytitle{Day 2}{10 月 21 日（周三）· 比赛日}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{1.6cm}L{4.4cm}L{3.5cm}X@{}}
+\toprule
+\thd{时间} & \thd{事项} & \thd{交通方式} & \thd{地点 / 备注}\\
+\midrule
+07:00 & 起床、洗漱、早餐 & — & 闹钟设两个；酒店餐厅\textbf{吃饱}，12 小时比赛消耗大\\
+07:35 & 清点随身物品 & — & 身份证、学生证、准考证、纸质资料、笔、水\\
+07:45 & 大堂集合，出发前往赛场 & 步行 / 打车 & 约 1 公里，步行 15 分钟或打车起步价\\
+08:05 & 抵达西华大学 & — & 按现场指示牌前往签到区\\
+08:10 & \textbf{CCFLinks 扫码签到} & — & 出示准考证与身份证，核对参赛信息\\
+08:20 & \textbf{领取参赛物资} & — & 胸牌、秩序册、纪念品等，\textbf{当场清点}再离开\\
+08:35 & 系统调试 & — & 试编译、确认环境、摆放纸质资料\\
+08:50 & 就座待考 & — & 检查键盘鼠标；入场物品检查（\textbf{无 U 盘}）\\
+09:00 & \textbf{比赛开始} & — & 12 小时，\textbf{中途不离场}\\
+12:00 & 午餐 & — & 往年发热盒饭，\textbf{仍建议自备干粮}\\
+18:00 & 晚餐 & — & 往年发热盒饭，\textbf{仍建议自备干粮}\\
+21:00 & \textbf{比赛结束} & — & 确认代码已提交，带走全部物品\\
+21:15 & 返回酒店 & 步行 / 打车 & 约 1 公里\\
+21:40 & 夜宵 & — & 红光镇周边\\
+23:00 & 休息 & — & —\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+\textbf{签到与物资领取的确切时间官方尚未公布}，往年惯例为上午 8:00 前后开放。
+上表按 08:05 到场预留，\textbf{出发前请留意 CCF 官方邮件与 CCSP 官网通知}，
+若时间提前，把「大堂集合」整体前移即可。
+\end{warnbox}
+
+\begin{warnbox}
+\textbf{补给是 12 小时比赛的关键}。\textbf{往年主办方午餐、晚餐都提供热盒饭}，
+但\textbf{仍建议自备干粮}——排队领饭会打断做题节奏，手边有东西更稳妥。
+建议随身携带：士力架 / 能量棒、咖啡、面包或饭团、不少于 1 升的饮水。
+\end{warnbox}
+
+\begin{okbox}
+\textbf{赛前策略提醒}\\
+$\bullet$ 5 题 500 分，一般难度递增。\\
+$\bullet$ 纸质模板提前分册，考场上翻得快。\\
+$\bullet$ 比赛 12 小时，建议每一段时间放松一次精神，避免后程思维僵化。\\
+$\bullet$ \textbf{一定要学会骗分}，奖牌边缘争的往往不是完整过题，而是部分分：
+把暴力、特殊性质、小数据分稳稳拿住。
+\end{okbox}
+
+% ---------- Day 3 ----------
+\newpage
+\daytitle{Day 3}{10 月 22 日（周四）· 颁奖典礼与 CNCC}
+
+本日无比赛，\textbf{上午自由安排}，睡到自然醒也可以。只需记住一个节点：
+
+\textbf{颁奖典礼 14:00--16:00，13:30 入场就座}，地点为\textbf{天府国际会议中心}
+（成都市双流区蜀州路 3333 号，西博城地铁站 E 口步行 60 米）。
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.3cm}L{1.9cm}L{2.8cm}X@{}}
+\toprule
+\thd{方案} & \thd{最晚出发} & \thd{耗时} & \thd{说明}\\
+\midrule
+打车 & \textbf{12:30} & 约 55 分钟 & 约 40 公里，120--140 元；\textbf{推荐}，最省心\\
+地铁 6 号线 & \textbf{11:45} & 约 1 小时 40 分 & 一车直达西博城，无需二次换乘\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{okbox}
+\textbf{CNCC2026 与颁奖典礼在同一片场馆}\\
+\textbf{参赛选手免费参会}（10 月 21--24 日）。想听报告的话，
+\textbf{上午先去 CNCC，下午原地参加颁奖}。
+\end{okbox}
+
+\begin{keybox}
+\textbf{地铁 6 号线怎么走}\\
+酒店 $\rightarrow$ 步行至\textbf{金土站} $\rightarrow$ 有轨电车蓉 2 号线支线（往新业路方向）
+$\rightarrow$ \textbf{交大犀浦校区站}换乘 \textbf{地铁 6 号线}（往兰家沟方向）$\rightarrow$
+\textbf{西博城站}下车 $\rightarrow$ \textbf{E 口}出站步行 60 米。
+\end{keybox}
+
+\begin{warnbox}
+颁奖安排在天府新区，\textbf{与酒店分处城市两端}，单程 40 公里以上。
+\end{warnbox}
+
+% ---------- Day 3 ----------
+\daytitle{Day 4}{10 月 23 日（周五）· 成都 $\rightarrow$ 合肥}\label{sec:day4}
+
+上午同样自由安排，\textbf{只要在下面任一「最晚出发」之前出门}，就能赶上 11:51 的高铁。
+两条路都按 \textbf{11:10 前抵达成都东站}倒推，留约 40 分钟安检进站。
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.3cm}L{1.9cm}L{2.8cm}X@{}}
+\toprule
+\thd{方案} & \thd{最晚出发} & \thd{耗时} & \thd{说明}\\
+\midrule
+打车 & \textbf{10:20} & 约 50 分钟 & 约 30 公里，85--100 元；行李多或下雨直接打车\\
+地铁 2 号线 & \textbf{09:35} & 约 1 小时 35 分 & 金土站 $\rightarrow$ 有轨电车 $\rightarrow$ 天河路换 2 号线（龙泉驿方向）$\rightarrow$ 成都东客站\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{出门前别忘了}\\
+$\bullet$ 退房、结账，需要报销的记得索要发票；\\
+$\bullet$ 重点检查充电器、充电宝、身份证等证件；\\
+$\bullet$ 到站后按指示牌走，\textbf{检票口 A13}。
+\end{keybox}
+
+\begin{warnbox}
+\textbf{车上历时 9 小时 50 分}：午餐、晚餐均在车上解决，\textbf{请提前备好食物与饮水}。
+21:41 抵达合肥，当晚如需返校请提前安排交通。
+\end{warnbox}
+
+% ============================================================
+\section{住宿信息}
+% ============================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.0cm}X@{}}
+\toprule
+\thd{项目} & \thd{内容}\\
+\midrule
+酒店名称 & 繁洲花园大酒店（原丽天花园大酒店）\\
+星级 & 四星级\\
+地址 & 四川省成都市郫都区红光街道广场路北三段 88 号\\
+电话 & 028-87922176 \quad/\quad 15308236858\\
+距赛场 & 约 1 公里（部分来源标注 850 米，步行 12--18 分钟）\\
+入住日期 & 10 月 20 日、21 日、22 日，共三晚\\
+退房日期 & 10 月 23 日上午\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{入住当晚要问前台两件事}\\
+1. 早餐几点开始、在哪一层\\
+2. 10 月 23 日最晚退房时间，是否需要延迟退房
+\end{keybox}
+
+\begin{warnbox}
+酒店电话存在多个号码，上表两个为较可靠的来源。\textbf{出发前建议再核实一次}，
+并把号码存进手机通讯录，避免到达后临时查找。
+\end{warnbox}
+
+% ============================================================
+\section{行前清单与提醒}\label{sec:remind}
+% ============================================================
+
+\subsection{随身证件与材料}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{0.9cm}L{4.2cm}X@{}}
+\toprule
+\thd{$\checkmark$} & \thd{物品} & \thd{说明}\\
+\midrule
+$\square$ & 身份证 & 乘车、入住、入场都要用，\textbf{时刻贴身保管}\\
+$\square$ & 学生证 & 入场核验\\
+$\square$ & 准考证 & \textbf{纸质版}，建议打印 2 份分开放\\
+$\square$ & 纸质参考资料 & 今年\textbf{禁止电子设备}，模板必须打印装订\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+\textbf{出发前请在 12306 核对车票状态}，确认已出票、乘车人信息无误。
+\end{warnbox}
+
+\subsection{竞赛装备}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{0.9cm}L{4.2cm}X@{}}
+\toprule
+\thd{$\checkmark$} & \thd{物品} & \thd{说明}\\
+\midrule
+$\square$ & 键盘 / 鼠标 & 允许携带，无存储功能即可，须经检查\\
+$\square$ & 有线耳机 & 允许携带\\
+$\square$ & 笔、草稿本 & 竞赛用\\
+$\square$ & 水杯 & 12 小时比赛，补水很重要\\
+$\square$ & 干粮 & 士力架、能量棒、面包；考场是否供餐以现场为准\\
+$\square$ & \textcolor{accent}{U 盘} & \textcolor{accent}{\textbf{不要带}}，今年明令禁止\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{生活与气候}
+
+\begin{keybox}
+\textbf{成都 10 月下旬气候}\\
+平均气温约 \textbf{13--19\,$^\circ$C{}}，白天 19\,$^\circ$C{} 左右、夜间 13\,$^\circ$C{} 左右，
+\textbf{早晚温差明显}，多阴雨、湿度大。遇冷空气时最低可降到 10\,$^\circ$C{} 出头。\\[0.4em]
+\textbf{穿衣建议}：长袖 T 恤或薄毛衣 + 夹克/风衣，外层可脱可穿；
+带一把折叠伞；鞋子以防滑、耐走的运动鞋为宜。\\
+\textbf{特别提醒}：要在考场里坐满 12 小时，\textbf{建议带一件薄外套}。
+\end{keybox}
+
+\begin{warnbox}
+\textbf{饮食提醒}\\
+成都菜\textbf{普遍偏辣}，点餐时\textbf{主动说明「外地人，少辣/不辣」}，店家一般会照顾口味。
+比赛日前一晚\textbf{不要吃太辣、太油}，避免次日肠胃不适影响发挥。
+\end{warnbox}
+
+\subsection{其他}
+
+\begin{itemize}[leftmargin=1.6em,itemsep=0.3em]
+  \item 提前下载 \textbf{CCFLinks} App，并留意 CCF 官方发送的邮件。
+  \item 出发前\textbf{告知亲友行程与目的地}，保持通讯畅通。
+  \item 充电宝、数据线、转换头按需携带；酒店插座为标准国标。
+  \item 常用药品（肠胃药、感冒药、晕车药）建议随身带一点。
+  \item 竞赛期间\textbf{整体轻装上阵}，物品越少，检查越快、负担越轻。
+\end{itemize}
+
+\newpage
+
+% ============================================================
+\appendix
+\section{资料来源}
+
+本手册中的竞赛信息、交通路线与酒店信息来自以下来源，\textbf{出行前请以官方最新通知为准}：
+
+\begin{itemize}[leftmargin=1.6em,itemsep=0.25em]
+  \item CCF 官方通知：\href{https://www.ccf.org.cn/ccsp/tzgg/2026-09-09/931080.shtml}{2026 CCF CCSP 竞赛将于 10 月 21\textasciitilde 22 日举办}
+  \item CCF 官方通知：\href{https://www.ccf.org.cn/ccsp/}{CCSP 竞赛官网}
+  \item CCF 官方通知：\href{https://www.ccf.org.cn/ccsp/tzgg/2026-09-14/932132.shtml}{关于调整 2026 CCF CCSP 竞赛选手可携带资料规定的通知}（2026-09-14，CCSP 竞赛委员会）
+  \item 成都地铁 2 号线、6 号线、7 号线线路资料
+  \item 成都有轨电车蓉 2 号线支线线路资料
+  \item 西华大学交通指南、酒店预订平台公开信息
+\end{itemize}
+
+\begin{warnbox}
+本手册为\textbf{队伍内部出行参考}，其中交通耗时均为估算。
+官方如有新的报到安排、场地变更或规则调整，\textbf{以官方通知为准}。
+\end{warnbox}
+
+\vfill
+\begin{center}
+{\color{mainlite}\rule{0.6\textwidth}{0.8pt}}\\[0.6em]
+{\small\color{graytx} 祝旅途顺利，比赛取得理想成绩！}\\[0.4em]
+{\color{mainlite}\rule{0.6\textwidth}{0.8pt}}
+\end{center}
+
+\end{document}

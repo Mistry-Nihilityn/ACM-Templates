@@ -1,0 +1,495 @@
+% !TEX program = xelatex
+% 第 51 届 ICPC 亚洲区域赛（成都）参赛手册
+% 编译：latexmk -xelatex ICPC2026Chengdu.tex
+\documentclass[11pt,a4paper,fontset=windows]{ctexart}
+
+\usepackage[margin=2.1cm,top=2.4cm,bottom=2.2cm]{geometry}
+% 注意：不能用 xcolor 的 table 选项（会加载 colortbl）。
+% 本机 MiKTeX 的 array.sty(2023) 与 colortbl.sty(2026/05 v1.0l) 版本错配，
+% \rowcolor 会调用新版 array 才有的内部宏而报错。表格改用 booktabs 描线 + 彩色粗体表头。
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{amssymb}      % \checkmark \square
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage[colorlinks=true,linkcolor=main,urlcolor=accent,bookmarksnumbered]{hyperref}
+\usepackage{graphicx}
+
+% ---------- 配色 ----------
+\definecolor{main}{HTML}{1F4E79}
+\definecolor{mainlite}{HTML}{2E75B6}
+\definecolor{accent}{HTML}{C00000}
+\definecolor{warnbg}{HTML}{FDF1E7}
+\definecolor{okbg}{HTML}{EBF5EE}
+\definecolor{infobg}{HTML}{EAF1F8}
+\definecolor{graytx}{HTML}{595959}
+
+% ---------- 表格 ----------
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\thd}[1]{\textbf{\color{main}#1}}
+\newcommand{\subhd}[1]{\textbf{\color{graytx}#1}}
+\newcommand{\warnmark}{\textcolor{accent}{\rule[0.12em]{0.52em}{0.52em}}}
+
+% ---------- 标题样式 ----------
+\titleformat{\section}{\normalfont\Large\bfseries\color{main}}{\thesection}{0.7em}{}[\vspace{-0.5em}\color{main}\rule{\textwidth}{1.1pt}]
+\titleformat{\subsection}{\normalfont\large\bfseries\color{mainlite}}{\thesubsection}{0.6em}{}
+\titlespacing{\section}{0pt}{1.5em}{0.6em}
+\titlespacing{\subsection}{0pt}{1.1em}{0.4em}
+
+% ---------- 页眉页脚 ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{graytx}ICPC 2026 成都站参赛手册}
+\fancyhead[R]{\small\color{graytx}合肥 $\rightarrow$ 成都}
+\fancyfoot[C]{\small\color{graytx}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---------- 自定义盒子 ----------
+\newtcolorbox{keybox}[1][]{colback=infobg, colframe=main, boxrule=0pt, leftrule=3.5pt,
+  arc=1.5pt, left=8pt, right=8pt, top=6pt, bottom=6pt, #1}
+\newtcolorbox{warnbox}[1][]{colback=warnbg, colframe=accent, boxrule=0pt, leftrule=3.5pt,
+  arc=1.5pt, left=8pt, right=8pt, top=6pt, bottom=6pt, #1}
+\newtcolorbox{okbox}[1][]{colback=okbg, colframe=green!45!black, boxrule=0pt, leftrule=3.5pt,
+  arc=1.5pt, left=8pt, right=8pt, top=6pt, bottom=6pt, #1}
+
+\newcommand{\daytitle}[2]{%
+  \vspace{0.7em}
+  {\large\bfseries\color{white}\colorbox{main}{\strut\ \ #1\ \ \normalsize #2\ \ }}%
+  \vspace{0.35em}\par}
+
+\begin{document}
+
+% ============================================================
+% 封面
+% ============================================================
+\thispagestyle{empty}
+\vspace*{2.8cm}
+\begin{center}
+  {\color{mainlite}\rule{\textwidth}{2pt}}\\[0.85em]
+  {\Huge\bfseries\color{main} ICPC 2026}\\[0.45em]
+  {\LARGE\bfseries 成\hspace{0.3em}都\hspace{0.3em}站\hspace{0.5em}参\hspace{0.3em}赛\hspace{0.3em}手\hspace{0.3em}册}\\[0.85em]
+  {\color{mainlite}\rule{\textwidth}{2pt}}
+\end{center}
+
+\vspace{2.4cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{@{}r@{\hspace{2.2em}}l@{}}
+\subhd{文档名称}     & 第 51 届 ICPC 亚洲区域赛（成都）参赛手册\\[0.15em]
+\subhd{文档版本}     & v1.0\\[0.15em]
+\subhd{编\hspace{1em}制} & XCPC 集训队\\[0.15em]
+\subhd{编制日期}     & 2026 年 10 月 13 日\\[0.15em]
+\subhd{最近更新}     & 2026 年 10 月 13 日\\[0.15em]
+\subhd{赛事名称}     & 第 51 届 ICPC 国际大学生程序设计竞赛亚洲区域赛（成都）\\[0.15em]
+\subhd{主办承办}     & ICPC 亚洲区竞赛委员会授权 · 电子科技大学数学科学学院承办\\[0.15em]
+\subhd{赛程日期}     & 2026 年 10 月 24 日 至 10 月 25 日\\[0.15em]
+\subhd{往返日期}     & 2026 年 10 月 23 日 至 10 月 26 日\\
+\end{tabular}
+\end{center}
+
+\vfill
+\begin{center}
+{\color{mainlite}\rule{0.45\textwidth}{0.6pt}}\\[0.6em]
+{\small\color{graytx} 编制单位：合肥工业大叔队 \quad 编制日期：2026 年 10 月 13 日}
+\end{center}
+\newpage
+
+% ============================================================
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{一页速查}
+% ============================================================
+
+\begin{keybox}
+\textbf{\color{main}致两位队友}
+
+\vspace{0.35em}
+本手册是给两位队友看的。队员 A 已先行在成都，
+\textbf{你们 10 月 23 日出发，当晚在酒店与队员 A 汇合}。
+
+\vspace{0.35em}
+落地成都后你们要独立完成的部分，都写在这本手册里。\textbf{出发前两人对着清单互相核一遍}（见 \ref{sec:mutual} 节），别各查各的。
+\end{keybox}
+
+\vspace{0.8em}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.1cm}L{6.0cm}X@{}}
+\toprule
+\thd{项目} & \thd{内容} & \thd{说明}\\
+\midrule
+出发日 & 10 月 23 日（周五）10:21 & 合肥南 $\rightarrow$ 成都南\\
+汇合 & 10 月 23 日晚 & 汉庭酒店，与队员 A\\
+报到日 & 10 月 24 日（周六） & 报到 09:00--14:00，开幕式 14:00\\
+比赛日 & 10 月 25 日（周日）09:00--14:00 & 正式赛 5 小时\\
+返程日 & 10 月 26 日（周一）11:51 & 成都东 $\rightarrow$ 合肥，三人同行\\
+比赛场馆 & 郫都区体育中心体育馆 & 成都市郫都区蜀信西路 598 号\\
+酒店 & 汉庭酒店（成都高新电子科大店） & 郫都区合作路 89 号\\
+成都联络 & 见群内通知 & 房间以队员 A 名义预订\\
+成都气温 & 约 13--19\,$^\circ$C，多阴雨 & 早晚温差大，见 \ref{sec:remind} 节\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+\textbf{场馆不在电子科大校内}。比赛地点是\textbf{郫都区体育中心体育馆}，
+与酒店（电子科大清水河校区旁）相距约 12 公里，\textbf{要专门安排通勤}。
+\end{warnbox}
+
+\newpage
+
+% ============================================================
+\section{竞赛信息}
+% ============================================================
+
+\subsection{基本安排}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.9cm}X@{}}
+\toprule
+\thd{项目} & \thd{内容}\\
+\midrule
+竞赛名称 & 「华为杯」第 51 届 ICPC 国际大学生程序设计竞赛亚洲区域赛（成都）\\
+授权 / 承办 & ICPC 亚洲区竞赛委员会授权 \quad 电子科技大学数学科学学院承办\\
+比赛日期 & 2026 年 10 月 24 日（周六）至 10 月 25 日（周日）\\
+比赛地点 & 郫都区体育中心体育馆（成都市郫都区蜀信西路 598 号）\\
+奖项设置 & 金奖 $=$ 正式参赛队伍总数的 10\%（非整数上取整）；\\
+ & 银奖 $=$ 金奖数目的 2 倍；铜奖 $=$ 金奖数目的 3 倍；\\
+会务咨询 & QQ 群 557665508（2026 ICPC 成都赛站）\quad 邮箱 uestcicpc@126.com\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{日程安排（官方草案）}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.7cm}L{3.2cm}X@{}}
+\toprule
+\thd{日期} & \thd{时间} & \thd{事项}\\
+\midrule
+\multirow{3}{*}{10 月 24 日（周六）} & 09:00--14:00 & 赛队报到\\
+ & 14:00--15:00 & 开幕式\\
+ & 15:00--17:00 & 热身赛\\
+\midrule
+\multirow{3}{*}{10 月 25 日（周日）} & 09:00--14:00 & \textbf{正式赛}（5 小时）\\
+ & 14:15--15:30 & 赛题讲解，赞助企业宣讲\\
+ & 15:30--16:30 & 闭幕式暨颁奖典礼\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+以上为邀请函所附\textbf{草案}，具体安排以\textbf{官方参赛手册}为准。
+报到时间是一个 5 小时的窗口（09:00--14:00），不是必须 09:00 到场。
+\end{warnbox}
+
+\newpage
+
+% ============================================================
+\section{行程总览}
+% ============================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.5cm}L{2.6cm}X@{}}
+\toprule
+\thd{日期} & \thd{关键节点} & \thd{行程主线}\\
+\midrule
+10 月 23 日（周五） & 10:21 发车 / 19:01 抵达 & 合肥 $\rightarrow$ 成都南站 $\rightarrow$ 地铁 $\rightarrow$ 酒店汇合\\
+10 月 24 日（周六） & 09:00--17:00 & 酒店 $\rightarrow$ 体育馆，报到、开幕式、热身赛\\
+10 月 25 日（周日） & 09:00--16:30 & 酒店 $\rightarrow$ 体育馆，\textbf{正式赛}、闭幕式\\
+10 月 26 日（周一） & 11:51 发车 / 21:41 抵达 & 酒店 $\rightarrow$ 成都东站 $\rightarrow$ 合肥\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{住宿跨度}：10 月 23 日、24 日、25 日共三晚，10 月 26 日中午前退房。\\
+\textbf{总时长}：10 月 23 日 10:21 出发 $\rightarrow$ 10 月 26 日 21:41 抵达合肥。
+\end{keybox}
+
+% ============================================================
+\section{逐日详细行程}
+% ============================================================
+
+以下时间均为\textbf{计划时间}。地铁、有轨电车的运行时间按平峰估算，未包含等车与换乘步行时间，
+\textbf{当天请以高德地图 / 百度地图实时导航为准}。\\[0.3em]
+Day 1 有硬性时间节点，按分钟列出；\textbf{Day 2--4 的场馆通勤给出「最晚出发时间」}，其余自行支配。
+
+% ---------- Day 1 ----------
+\newpage
+\daytitle{Day 1}{10 月 23 日（周五）· 合肥 $\rightarrow$ 成都}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{1.6cm}L{4.3cm}L{3.4cm}X@{}}
+\toprule
+\thd{时间} & \thd{事项} & \thd{交通方式} & \thd{地点 / 备注}\\
+\midrule
+08:45 & 集合，清点人员与行李 & — & 翡翠湖大北门\\
+08:55 & 步行前往地铁站 & 步行 & 工大翡翠湖校区站（3 号线），约 \textbf{15 分钟}\\
+09:10 & 乘地铁 3 号线 & 地铁 3 号线 & 前往换乘站\\
+09:35 & 换乘 4 号线 & 地铁 4 号线 & \textbf{图书馆站}站内换乘\\
+09:55 & 抵达合肥南站 & — & 出站后按「高铁进站口」指示走\\
+10:00 & 安检、进站、候车 & — & \textbf{检票口 10A}，21 分钟后发车\\
+10:21 & \textbf{G3391 发车} & 高铁 & 合肥南 $\rightarrow$ 成都南\\
+\midrule
+19:01 & 抵达成都南站 & 高铁 & 准点到达\\
+19:05 & 出站，前往地铁站 & 步行 & 站内连通「火车南站」，跟随指示牌\\
+19:18 & 乘 7 号线（内环） & 地铁 7 号线 & 往西南交大方向，乘 12 站\\
+19:45 & \textbf{西南交大站换乘} & 站内换乘 & 换 6 号线，往\textbf{望丛祠}方向\\
+19:50 & 乘 6 号线 & 地铁 6 号线 & 乘 5 站\\
+20:05 & 抵达红高路站 & — & 出站打车\\
+20:10 & 打车前往酒店 & 打车 & 约 2.3 公里，约 10 元\\
+20:20 & \textbf{抵达汉庭酒店，与队员 A 汇合} & — & 房间已在队员 A 名下\\
+20:40 & 放下行李、稍作休息 & — & 与队友对接次日安排\\
+21:00 & 晚餐 & 步行 & 龙湖时代天街周边\\
+22:30 & 回房休息 & — & 次日为报到日，按时起\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+\textbf{车上历时 8 小时 40 分}：午餐、晚餐均在车上解决，\textbf{请提前备好干粮与饮品}。
+高铁停站一般只有三五分钟，来不及下车买东西；车上餐食又贵又难吃，别指望。
+\end{warnbox}
+
+\begin{keybox}
+\textbf{备选方案}\\
+成都南站打车直达酒店：约 25 公里，40--50 分钟，约 70--90 元。
+\textbf{若赶不上末班地铁，直接打车}。
+\end{keybox}
+
+\begin{keybox}
+\textbf{末班车提醒，务必随时看表}\\
+7 号线火车南站内环末班约 \textbf{23:27}，6 号线沿途各站末班普遍在 \textbf{23:00} 之后。\\
+{\small\color{graytx} 各线时刻请以站台公告为准。}
+\end{keybox}
+
+% ---------- Day 2 ----------
+\newpage
+\daytitle{Day 2}{10 月 24 日（周六）· 报到 \& 开幕式 \& 热身赛}
+
+报到是一个 5 小时窗口（09:00--14:00），不必赶早。\textbf{开幕式 14:00 开始}，这是当天的硬节点。
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{1.6cm}L{4.3cm}L{3.4cm}X@{}}
+\toprule
+\thd{时间} & \thd{事项} & \thd{交通方式} & \thd{地点 / 备注}\\
+\midrule
+08:30 & 起床、早餐 & — & 酒店\textbf{无早餐}，需外出解决\\
+09:30 & 大堂集合，出发前往赛场 & \textbf{打车（推荐）} & 约 12 公里，25--30 分钟\\
+10:00 & 抵达郫都区体育中心体育馆 & — & 按指示牌前往报到处\\
+10:10 & \textbf{赛队报到} & — & 领参赛物资、胸牌、秩序册\\
+11:30 & 午餐 & 步行 & 体育馆周边\\
+13:30 & 返回体育馆，入场就座 & — & 开幕式为正式场合\\
+14:00 & \textbf{开幕式} & — & 1 小时\\
+15:00 & \textbf{热身赛} & — & 2 小时，熟悉环境与系统\\
+17:00 & 热身赛结束 & — & 可现场交流\\
+17:30 & 返回酒店 & 打车 & 约 25--30 分钟\\
+18:30 & 晚餐 & — & 建议早点吃、早点休息\\
+21:00 & 回房，检查装备 & — & 见 \ref{sec:mutual} 节清单\\
+22:30 & 休息 & — & 次日 09:00 正式赛\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{赛后交通（省钱方案）}\\
+酒店门口有轨电车蓉 2 号线「\textbf{合作路站}」约 294 米 $\rightarrow$ 乘主线（往郫县西站方向）
+$\rightarrow$ \textbf{晨光站}下车 $\rightarrow$ 换 \textbf{P105 路} $\rightarrow$ 郫都体育馆站。\\
+全程约 50 分钟。去程也可用，但要更早出门。打车更省心，\textbf{比赛日建议打车}。
+\end{keybox}
+
+% ---------- Day 3 ----------
+\newpage
+\daytitle{Day 3}{10 月 25 日（周日）· 正式赛}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{1.6cm}L{4.3cm}L{3.4cm}X@{}}
+\toprule
+\thd{时间} & \thd{事项} & \thd{交通方式} & \thd{地点 / 备注}\\
+\midrule
+07:00 & 起床、洗漱、早餐 & — & 酒店无早餐，提前备好或外出买\\
+07:45 & 大堂集合，出发前往赛场 & \textbf{打车（推荐）} & 约 12 公里，预留堵车时间\\
+08:15 & 抵达体育馆，入场 & — & 入场物品检查\\
+08:45 & 就座、检查设备 & — & 键盘鼠标、纸质模板摆放\\
+09:00 & \textbf{正式赛开始} & — & 5 小时，中途不离场\\
+12:00 & 午餐 & — & 自备干粮 / 主办方提供（以现场为准）\\
+14:00 & \textbf{正式赛结束} & — & 确认提交完毕\\
+14:15 & 赛题讲解、赞助企业宣讲 & — & 可听可不听\\
+15:30 & \textbf{闭幕式暨颁奖典礼} & — & —\\
+16:30 & 结束，返回酒店 & 打车 & —\\
+18:00 & 晚餐 & — & —\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ---------- Day 4 ----------
+\daytitle{Day 4}{10 月 26 日（周一）· 成都 $\rightarrow$ 合肥}
+
+上午自由安排，\textbf{只要在下面任一「最晚出发」之前出门}，就能赶上 11:51 的高铁。
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.3cm}L{1.9cm}L{2.8cm}X@{}}
+\toprule
+\thd{方案} & \thd{最晚出发} & \thd{耗时} & \thd{说明}\\
+\midrule
+打车 & \textbf{10:40} & 约 50 分钟 & 约 25--30 公里，75--95 元；三人分摊，\textbf{推荐}\\
+公共交通 & \textbf{09:20} & 约 1 小时 40 分 & 有轨电车 $+$ 地铁多次换乘，行李多时不建议\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{出门前别忘了}\\
+$\bullet$ \textbf{12:00 前退房}（订单为 10 月 26 日 14:00 前离店，但你们要赶车，早点退）；\\
+$\bullet$ 重点检查充电器、充电宝、身份证、\textbf{纸质模板要不要带回去}；\\
+$\bullet$ 房间是三人共住，\textbf{退房前互相确认没有落下东西}；\\
+$\bullet$ 到站后按「成都东站」指示牌走，\textbf{检票口 A13}。
+\end{keybox}
+
+\begin{warnbox}
+\textbf{车上历时 9 小时 50 分}：午餐、晚餐均在车上解决，\textbf{请提前备好食物与饮水}。
+21:41 抵达合肥，当晚如需返校请提前安排交通。
+\end{warnbox}
+
+\newpage
+
+% ============================================================
+\section{住宿信息}
+% ============================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.0cm}X@{}}
+\toprule
+\thd{项目} & \thd{内容}\\
+\midrule
+酒店名称 & 汉庭酒店（成都高新电子科大店）\\
+地址 & 四川省成都市郫都区合作路 89 号（龙湖时代天街 5 栋）\\
+位置 & 距电子科技大学清水河校区 316 米\\
+房型 & 家庭房 1 间 3 晚｜双床｜\textbf{无早}｜有窗\\
+入住 & 2026 年 10 月 23 日 12:00 后\\
+离店 & 2026 年 10 月 26 日 14:00 前\\
+入住人 & \textbf{队员 A}（房间在队员 A 名下，队员 A 到得早，先去办理）\\
+联系方式 & 见群内通知\\
+取消政策 & 10 月 22 日 23:00 前免费取消\\
+门口轨道 & 有轨电车蓉 2 号线「合作路站」约 \textbf{294 米}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}
+\textbf{入住安排（三个人怎么住）}\\
+房间在\textbf{队员 A 名下}，家庭房、双床。队员 A 10 月 23 日先行抵店办理入住，
+你们两位当晚 20:20 前后到店，\textbf{直接报预订人姓名办理}。
+\end{keybox}
+
+\begin{warnbox}
+\textbf{酒店不含早餐}。三天早上一起早起外出吃，\textbf{比赛日（10 月 25 日）务必提前准备}。
+\end{warnbox}
+
+\newpage
+
+% ============================================================
+\section{行前清单与提醒}\label{sec:remind}
+% ============================================================
+
+\subsection{出发前：两人互相检查}\label{sec:mutual}
+
+\begin{warnbox}
+\textbf{\color{accent}这一条最重要：两个人面对面逐项核对，不要各查各的}
+
+\vspace{0.4em}
+出发前（建议 10 月 22 日晚）\textbf{两位队友坐在一起，拿这一节当清单，
+一人念、一人翻包}。行李是分开的，只有互相检查才能发现对方漏了什么。
+
+\vspace{0.4em}
+到了成都、进赛场之前，\textbf{再复核一次}——尤其是纸质模板和证件。
+\end{warnbox}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{0.9cm}L{4.0cm}X@{}}
+\toprule
+\thd{$\checkmark$} & \thd{物品} & \thd{说明}\\
+\midrule
+$\square$ & 身份证 & 乘车、入住、入场都要用，\textbf{时刻贴身保管}\\
+$\square$ & 学生证 & 入场核验\\
+$\square$ & 纸质模板 & ICPC 允许纸质资料，\textbf{按模块分册并贴标签}\\
+$\square$ & 键盘 / 鼠标 & 自带外设，注意赛前确认现场规则\\
+$\square$ & 笔、草稿本 & 竞赛用\\
+$\square$ & 充电器、充电宝 & 两人的都要查，别只查自己的\\
+$\square$ & 常用药品 & 肠胃药、感冒药、创可贴\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{生活与气候}
+
+\begin{keybox}
+\textbf{成都 10 月下旬气候}\\
+平均气温约 \textbf{13--19\,$^\circ$C}，白天 19\,$^\circ$C 左右、夜间 13\,$^\circ$C 左右，
+\textbf{早晚温差明显}，多阴雨、湿度大。\\[0.4em]
+\textbf{穿衣建议}：长袖 T 恤或薄毛衣 $+$ 夹克/风衣，外层可脱可穿；
+带一把折叠伞；鞋子以防滑、耐走的运动鞋为宜。\\
+\textbf{特别提醒}：赛场是体育馆，\textbf{坐着不动容易冷}，带一件薄外套。
+\end{keybox}
+
+\begin{warnbox}
+\textbf{饮食提醒}\\
+成都菜\textbf{普遍偏辣}，点餐时\textbf{主动说明「外地人，少辣/不辣」}。
+\textbf{比赛前一晚不要吃太辣、太油}，避免次日肠胃不适影响发挥。
+\end{warnbox}
+
+\subsection{应急备用方案}
+
+\begin{warnbox}
+\textbf{三个备用方案，记在手机备忘录里}\\
+\textbf{1. 赶不上末班车}：直接打车，不要赌最后一班。\\
+\textbf{2. 走错站或坐反方向}：看清线路方向再上车；坐反了在下一站下车换对面即可，不要慌。\\
+\textbf{3. 与队友走散}：约定固定集合点（酒店大堂），先回酒店再联系。
+\end{warnbox}
+
+\begin{keybox}
+\textbf{关键联系方式}\\
+$\bullet$ 队员 A（先行抵蓉、房间在队员 A 名下）：见群内通知\\
+$\bullet$ 会务 QQ 群：\textbf{557665508}（2026 ICPC 成都赛站）\\
+$\bullet$ 会务邮箱：uestcicpc@126.com\\
+$\bullet$ 报警 110 / 急救 120 / 火警 119
+\end{keybox}
+
+% ============================================================
+\appendix
+\section{资料来源}
+
+本手册中的竞赛信息来自赛事官方文件，交通与住宿信息来自公开渠道。
+\textbf{出行前请以官方最新通知为准}：
+
+\begin{itemize}[leftmargin=1.6em,itemsep=0.25em]
+  \item 官方文件：《「华为杯」第 51 届 ICPC 国际大学生程序设计竞赛亚洲区域赛（成都）邀请函》
+  \item 官方文件：同场《报名指南》（含日程安排草案、奖项设置、会务联系方式）
+  \item 赛场地址与通行：公开地图与交通资料（郫都区体育中心体育馆，蜀信西路 598 号）
+  \item 成都地铁 4 号线、6 号线、7 号线线路资料
+  \item 成都有轨电车蓉 2 号线主线（成都西站—郫县西站）线路资料
+  \item 酒店信息：预订平台订单页与酒店公开资料
+\end{itemize}
+
+\begin{warnbox}
+本手册为\textbf{队伍内部出行参考}，其中交通耗时均为估算。
+\textbf{赛场地址与场馆入口以组委会现场通知为准}；日程草案可能有调整，请留意 QQ 群公告。
+\end{warnbox}
+
+\vfill
+\begin{center}
+{\color{mainlite}\rule{0.6\textwidth}{0.8pt}}\\[0.6em]
+{\small\color{graytx} 祝旅途顺利，比赛取得理想成绩！}\\[0.4em]
+{\color{mainlite}\rule{0.6\textwidth}{0.8pt}}
+\end{center}
+
+\end{document}
