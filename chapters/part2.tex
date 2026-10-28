@@ -772,116 +772,121 @@ int main() {
 
 
 \begin{codeline}
-const int N = 100005;
-const int INF = 0x3f3f3f3f;
-
-class Node {
+class TreeDiameter {
 public:
-    vector<int> oe;
-    int w, longest;
-};
+    class Edge {
+    public:
+        int v;
+        int64 w;
+    };
 
-class Graph {
-public:
-    Node node[N];
-    int d_s, d_t, d_l;
-    int core;
-    int node_cnt;
-    vector<int> trace;
+    int n = 0;
+    vector<vector<Edge>> oe;
+    vector<int64> dis;
+    vector<int> fa;
+    int64 length = 0;
 
-    void d_dfs1(int cur, int fa, int d) {
-        if(d > d_l) {
-            d_s = cur;
-            d_l = d;
-        }
-        for(int son : node[cur].oe) {
-            if(son != fa) {
-                d_dfs1(son, cur, d + 1);
-            }
-        }
+    /*
+     * 初始化 n 个点的空树
+     */
+    void init(int n_) {
+        n = n_;
+        oe.assign(n + 1, {});
+        dis.assign(n + 1, 0);
+        fa.assign(n + 1, 0);
+        length = 0;
     }
 
-    int d_dfs2(int cur, int fa) {
-        int w;
-        for(int i = 0; i < node[cur].oe.size(); i++) {
-            int son = node[cur].oe[i];
-            if(son != fa) {
-                w = d_dfs2(son, cur);
-                if(w > node[cur].w) {
-                    node[cur].w = w;
-                    node[cur].longest = son;
-                }
-            }
-        }
-        node[cur].w++;
-        return node[cur].w;
+    /*
+     * 添加无向边，默认边权为 1
+     */
+    void add_edge(int u, int v, int64 w = 1) {
+        oe[u].push_back({v, w});
+        oe[v].push_back({u, w});
     }
 
-    void d_dfs3(int cur, int fa, int& k) {
+    /*
+     * 从 s 出发求各点距离与父亲
+     */
+    void dfs(int s) {
+        fill(dis.begin(), dis.end(), -1);
+        fill(fa.begin(), fa.end(), 0);
+        stack<int> st;
+        st.push(s);
+        dis[s] = 0;
+        while(!st.empty()) {
+            int u = st.top();
+            st.pop();
+            for(Edge& e : oe[u]) {
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=47]
-        trace.push_back(cur);
-        for(int i = 0; i < node[cur].oe.size() && k; i++) {
-            int son = node[cur].oe[i];
-            if(son != fa) {
-                k--;
-                d_dfs3(son, cur, k);
-                trace.push_back(cur);
+                if(dis[e.v] == -1) {
+                    dis[e.v] = dis[u] + e.w;
+                    fa[e.v] = u;
+                    st.push(e.v);
+                }
             }
         }
     }
 
-    void get_diameter(int start = 1) {
-        d_dfs1(start, 0, 1);
-        d_l = d_dfs2(d_s, 0);
-    }
-
-    void add_edge(int u, int v) {
-        node[u].oe.push_back(v);
-        node[v].oe.push_back(u);
-    }
-
-    void init(int size) {
-        node_cnt = size;
-        for(int i = 0; i <= node_cnt; i++) {
-            node[i].oe.clear();
-            node[i].w = 0;
-            node[i].longest = -1;
+    /*
+     * 返回当前 dis 中的最远点
+     */
+    int farthest() {
+        int res = 1;
+        for(int i = 1; i <= n; i++) {
+            if(dis[i] > dis[res]) {
+                res = i;
+            }
         }
-        trace.clear();
-        d_s = 0;
-        d_t = 0;
-        d_l = 0;
+        return res;
     }
 
-    void solve() {
-        get_diameter();
-        cout << (d_l - 1) << '\n';
+    /*
+     * 一次调用求出直径，返回从一端到另一端的点序列；length 保存直径长度
+     */
+    vector<int> get_path(int start = 1) {
+        dfs(start);
+        int s = farthest();
+        dfs(s);
+        int t = farthest();
+        length = dis[t];
+        vector<int> path;
+        for(int u = t; u; u = fa[u]) {
+            path.push_back(u);
+            if(u == s) {
+                break;
+            }
+        }
+        reverse(path.begin(), path.end());
+        return path;
     }
 };
 
-Graph graph;
+TreeDiameter tree;
 
 int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    int n, u, v;
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=93]
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n;
     cin >> n;
-    graph.init(n);
+    tree.init(n);
     for(int i = 1; i < n; i++) {
+        int u, v;
         cin >> u >> v;
-        graph.add_edge(u, v);
+        tree.add_edge(u, v);
     }
-
-    graph.solve();
+    vector<int> path = tree.get_path();
+    // 本题无权，点数减一即直径；带权时输出 tree.length
+    cout << path.size() - 1 << '\n';
 }
 \end{codeline}
 \begin{warnbox}
-两次 DFS 只适用于非负边权；带负权要用树形 DP。
+两次 DFS 只适用于非负边权；\texttt{get\_path} 返回直径点序列，\texttt{length} 为直径长度。带负权要用树形 DP。
 \end{warnbox}
 
 \section{偏心距}
