@@ -3,7 +3,7 @@
 \chapter{最短路}
 
 \section{单源最短路}
-\entrymeta{Dijkstra $O(m\log m)$；Johnson $O(nm\log m)$}
+\entrymeta{Dijkstra $O(m\log m)$}
 \subsection{P4779 【模板】单源最短路径（标准版）}\label{p4779-ux6a21ux677fux5355ux6e90ux6700ux77edux8defux5f84ux6807ux51c6ux7248}
 
 
@@ -61,136 +61,6 @@ int main() {
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=47]
-}
-\end{codeline}
-
-
-\subsection{P5905 【模板】全源最短路（Johnson）}\label{p5905-ux6a21ux677fux5168ux6e90ux6700ux77edux8defjohnson}
-
-
-
-
-
-
-
-
-
-
-
-
-\begin{codeline}
-#define N 3005
-
-class Way {
-public:
-    int64 v, w;
-};
-class State {
-public:
-    int64 idx, d;
-};
-inline bool operator<(const State& A, const State& B) {
-    return A.d > B.d;
-}
-vector<Way> way[N];
-int64 d[N];
-int64 h[N];
-queue<int64> q;
-int64 round_cnt[N];
-bool in_queue[N];
-priority_queue<State> pq;
-bool visited[N];
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    int n, m;
-    memset(h, 0x3f, sizeof(h));
-
-    cin >> n >> m;
-    int u, v, w;
-    while(m-- > 0) {
-        cin >> u >> v >> w;
-        way[u].push_back({v, w});
-    }
-    for(int i = 1; i <= n; i++) {
-        way[0].push_back({i, 0});
-    }
-    int64 idx;
-    h[0] = 0;
-    q.push(0);
-    bool negative_circle = false;
-    while(!q.empty() && !negative_circle) {
-        idx = q.front();
-        q.pop();
-        in_queue[idx] = false;
-        for(Way& e : way[idx]) {
-            if(h[idx] + e.w < h[e.v]) {
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=47]
-                if(round_cnt[e.v] > n) {
-                    negative_circle = true;
-                    break;
-                } else {
-                    h[e.v] = h[idx] + e.w;
-                    if(!in_queue[e.v]) {
-                        round_cnt[e.v]++;
-                        q.push(e.v);
-                        in_queue[e.v] = true;
-                    }
-                }
-            }
-        }
-    }
-
-    if(negative_circle) {
-        cout << "-1";
-        return 0;
-    } else {
-        for(int i = 1; i <= n; i++) {
-            for(Way& e : way[i]) {
-                e.w += h[i] - h[e.v];
-            }
-        }
-
-        int64 sum, tmp;
-        for(int i = 1; i <= n; i++) {
-            sum = 0;
-            memset(d, 0x3f, sizeof(d));
-            memset(visited, 0, sizeof(visited));
-            State now;
-            pq.push({i, 0});
-            d[i] = 0;
-            while(!pq.empty()) {
-                now = pq.top();
-                pq.pop();
-                if(!visited[now.idx]) {
-                    visited[now.idx] = true;
-                    for(Way& e : way[now.idx]) {
-                        if(d[now.idx] + e.w < d[e.v]) {
-                            d[e.v] = d[now.idx] + e.w;
-                            pq.push({e.v, d[e.v]});
-                        }
-                    }
-                }
-            }
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=93]
-            for(int j = 1; j <= n; j++) {
-                if(d[j] >= (1ll << 31)) {
-                    if(i != j) {
-                        sum += 1000000000ll * j;
-                    }
-                } else {
-                    if(i != j) {
-                        sum += (d[j] + h[j] - h[i]) * j;
-                    }
-                }
-            }
-            cout << (sum) << '\n';
-        }
-    }
 }
 \end{codeline}
 
@@ -427,7 +297,136 @@ int main() {
 }
 \end{codeline}
 \begin{warnbox}
-Johnson 先跑 SPFA 求势能，再对每个源跑 Dijkstra；判不可达直接与 INF 比较。
+Dijkstra 用 \texttt{visited} 判重，判不可达直接与 \texttt{INF} 比较；要求边权非负。
+\end{warnbox}
+
+\section{全源最短路}
+\entrymeta{Floyd $O(n^3)$；Johnson $O(nm\log n)$}
+稠密图（\(n \lesssim 500\)）用 Floyd，\(O(n^3)\)；稀疏图（\(m\) 与 \(n\) 同阶）用 Johnson，\(O(nm\log n)\)。两者都允许负边，都要求图中没有负环。读入前先把距离全部置 \texttt{INF}、\texttt{dis{[}i{]}{[}i{]}} 置 0，重边取 min。
+
+\subsection{Floyd}\label{floyd}
+
+
+\begin{codeline}
+const int N = 505;
+const int64 INF = 0x3f3f3f3f3f3f3f3f;
+
+int64 dis[N][N];
+
+/*
+ * n 个点的全源最短路，调用前 dis 已按上面的方式初始化
+ */
+void floyd(int n) {
+    for(int k = 1; k <= n; k++) {
+        for(int u = 1; u <= n; u++) {
+            if(dis[u][k] >= INF) {
+                continue;
+            }
+            for(int v = 1; v <= n; v++) {
+                if(dis[k][v] < INF && dis[u][k] + dis[k][v] < dis[u][v]) {
+                    dis[u][v] = dis[u][k] + dis[k][v];
+                }
+            }
+        }
+    }
+}
+\end{codeline}
+
+
+\subsection{Johnson}\label{johnson}
+
+
+\begin{codeline}
+const int N = 3005;
+const int INF = 0x3f3f3f3f;
+
+class Edge {
+public:
+    int v;
+    int w;
+};
+
+class Node {
+public:
+    vector<Edge> oe;
+    int dis;   // johnson(s) 之后为 s 到本点的最短路
+    int h;     // 势能，全图只求一次
+};
+
+Node node[N];
+int n = 0;
+
+/*
+ * 所有点初值 0 同时入队，等价于虚拟源点向每个点连一条 0 权边
+ * 调用一次求出势能 h；返回 false 表示图中有负环
+ */
+bool calc_potential() {
+    vector<int> cnt(n + 1, 0);
+    vector<bool> inq(n + 1, true);
+    queue<int> q;
+    for(int u = 1; u <= n; u++) {
+        q.push(u);
+    }
+    while(!q.empty()) {
+        int u = q.front();
+        q.pop();
+        inq[u] = false;
+        for(auto& [v, w] : node[u].oe) {
+            if(node[u].h + w < node[v].h) {
+                node[v].h = node[u].h + w;
+                cnt[v] = cnt[u] + 1;
+                if(cnt[v] >= n) {
+                    return false;
+                }
+                if(!inq[v]) {
+                    inq[v] = true;
+                    q.push(v);
+                }
+            }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        }
+    }
+    return true;
+}
+
+/*
+ * 负权单源最短路：先手动调用一次 calc_potential()，再对每个源点调用本函数
+ * 之后 node[u].dis 为 s 到 u 的最短路
+ */
+void johnson(int s) {
+    for(int u = 1; u <= n; u++) {
+        node[u].dis = INF;
+    }
+
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    node[s].dis = 0;
+    pq.push({0, s});
+    while(!pq.empty()) {
+        auto [dis, u] = pq.top();
+        pq.pop();
+        if(node[u].dis != dis) {
+            continue;
+        }
+        for(auto& [v, w] : node[u].oe) {
+            int g = w + node[u].h - node[v].h;
+            if(node[u].dis + g < node[v].dis) {
+                node[v].dis = node[u].dis + g;
+                pq.push({node[v].dis, v});
+            }
+        }
+    }
+
+    for(int u = 1; u <= n; u++) {
+        if(node[u].dis < INF) {
+            node[u].dis += node[u].h - node[s].h;
+        }
+    }
+}
+\end{codeline}
+\begin{warnbox}
+Floyd 的 \texttt{k} 必须在最外层；Johnson 先手动调用一次 \texttt{calc\_potential()}（返回 false 表示有负环），再对每个源点调用 \texttt{johnson(s)}，之后读 \texttt{node[u].dis}。
 \end{warnbox}
 
 \section{差分约束}
@@ -836,13 +835,13 @@ public:
     void get_diameter(int start = 1) {
         d_l = 0;
         d_s = start;
-        dfs(start, 0, 0);
+        dfs(start, 0, 1);
         int s = d_s;
         d_l = 0;
         d_s = s;
-        dfs(s, 0, 0);
+        dfs(s, 0, 1);
         int t = d_s;
-        d_l = node[t].d;
+        d_l = node[t].d-node[s].d;
         d_s = s;
         d_t = t;
         diameter.clear();
@@ -1056,7 +1055,8 @@ public:
     int64 dfncnt = 0;
 
     /*
-     * 初始化 n 个点的空树，注意初始化半群结构
+     * 初始化 n 个点的空树
+     * 注意初始化半群结构，注意半群初始化需要dfninv转换
      */
     void init(int64 n) {
         node.assign(n + 1, Node());
@@ -1087,10 +1087,10 @@ public:
                     node[u].heavy = v;
                 }
             }
-        }
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=47]
+        }
     }
 
     void dfs2(int u, int h) {
@@ -1136,10 +1136,10 @@ public:
     }
 
     /*
-     * 查询 dfn 区间 [l, r]，x 为题目需要的查询参数
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=93]
+     * 查询 dfn 区间 [l, r]，x 为题目需要的查询参数
      */
     int64 dfnquery(int l, int r) {
         return 0;
@@ -1163,7 +1163,7 @@ public:
     }
 
     /*
-     * 查询 u 到 v 路径上的信息，x 为题目需要的查询参数
+     * 查询 u 到 v 路径上的信息
      */
     int query(int u, int v) {
         int res = 0;
@@ -1397,11 +1397,11 @@ int main() {
 \clearpage
 \subsection*{延伸阅读}
 \begin{center}
-\includegraphics[page=1,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_027.pdf}
+\includegraphics[page=1,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_028.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=2,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_027.pdf}
+\includegraphics[page=2,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_028.pdf}
 \end{center}
 \clearpage
 
@@ -2179,15 +2179,23 @@ public:
     }
 
     /*
+     * 第 i 条边（按 add_edge 的调用顺序，从 1 开始）跑了多少流
+     */
+    int64 flow(int i) {
+        // 第 i 条边的正边编号是 2i-2、反向边是 2i-1，反向边容量就是流量
+        return edge[2 * i - 1].c;
+    }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+
+    /*
      * 从汇点反向 BFS，求各点到汇点的最短距离并统计 gap
      */
     void get_level_graph() {
         for(auto& u : node) {
             u.d = cnt;
             u.ce = 0;
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=47]
             u.pre = 0;
         }
         fill(gap.begin(), gap.end(), 0);
@@ -2226,6 +2234,9 @@ public:
 
     /*
      * 求 s 到 t 的最大流，修改残量网络
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
      */
     int64 max_flow(int s, int t) {
         src = s;
@@ -2234,9 +2245,6 @@ public:
         int64 ans = 0;
         int u = src;
         while(node[src].d < cnt) {
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=93]
             if(u == terminal) {
                 ans += augment();
                 u = src;
@@ -2717,216 +2725,633 @@ int main() {
 先 SPFA 求初始势能，之后 Dijkstra；负费用边需保证无负环。
 \end{warnbox}
 
+\section{上下界网络流}
+\entrymeta{ISAP 的 $O(n^2m)$}
+在 ISAP 上加一层：每条边记成流量限制 \texttt{{[}low,\ up{]}}，先按 \texttt{up\ -\ low} 建残量边，再把下界造成的盈亏记在 \texttt{d{[}{]}}，最后用超级源汇补齐。\texttt{init(n)} 会自动多开 n+1、n+2 两个点给超级源汇用。无源汇直接调 \texttt{feasible()}；有源汇用 \texttt{max\_flow(s,\ t)} / \texttt{min\_flow(s,\ t)}，两者内部会自己加一条 t 到 s 的无穷边，无解返回 -1。注意''无解''包含''不存在流量值非负的可行流''这一情况；\texttt{min\_flow} 的答案是所有可行流里的最小值，如果它是负数，说明最优解是 t 往 s 送流，正常题目不会这么问。可行之后用 \texttt{flow(i)} 取第 i 条边（按 \texttt{add\_edge} 的调用顺序，从 0 开始）的实际流量，直接输出就是一组可行解；自环、重边都按普通边处理。
+
+
+\begin{codeline}
+class BoundedFlow : public ISAP {
+public:
+    vector<int64> d;    // 下界造成的盈亏
+    vector<int64> lo;   // 每条边的下界，供 flow 还原实际流量
+    int n = 0;
+    int ss = 0;
+    int tt = 0;
+
+    /*
+     * 多开两个点 n+1、n+2 作为超级源汇
+     */
+    void init(int n_) {
+        n = n_;
+        ISAP::init(n + 2);
+        d.assign(n + 3, 0);
+        lo.clear();
+        ss = n + 1;
+        tt = n + 2;
+    }
+
+    /*
+     * 添加流量限制在 [low, up] 的边 u -> v
+     */
+    void add_edge(int u, int v, int64 low, int64 up) {
+        lo.push_back(low);
+        ISAP::add_edge(u, v, up - low);
+        d[u] -= low;
+        d[v] += low;
+    }
+
+    /*
+     * 第 i 条边（按 add_edge 的调用顺序，从 1 开始）的实际流量
+     * 要求所有边都在 feasible / max_flow / min_flow 之前加完
+     */
+    int64 flow(int i) {
+        // 第 i 条边的正边编号是 2i-2、反向边是 2i-1，下界加上反向边容量就是流量
+        return lo[i - 1] + edge[2 * i - 1].c;
+    }
+
+    /*
+     * 无源汇可行流：把下界的盈亏接到超级源汇上跑一遍
+     */
+    bool feasible() {
+        int64 need = 0;
+        for(int u = 1; u <= n; u++) {
+            if(d[u] > 0) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+                ISAP::add_edge(ss, u, d[u]);
+                need += d[u];
+            } else if(d[u] < 0) {
+                ISAP::add_edge(u, tt, -d[u]);
+            }
+        }
+        return ISAP::max_flow(ss, tt) == need;
+    }
+
+    /*
+     * 有源汇上下界最大流，无解返回 -1
+     */
+    int64 max_flow(int s, int t) {
+        int id = int(edge.size());
+        ISAP::add_edge(t, s, INF);
+        if(!feasible()) {
+            return -1;
+        }
+        int64 base = edge[id ^ 1].c;
+        edge[id].c = 0;
+        edge[id ^ 1].c = 0;
+        return base + ISAP::max_flow(s, t);
+    }
+
+    /*
+     * 有源汇上下界最小流，无解返回 -1
+     */
+    int64 min_flow(int s, int t) {
+        int id = int(edge.size());
+        ISAP::add_edge(t, s, INF);
+        if(!feasible()) {
+            return -1;
+        }
+        int64 base = edge[id ^ 1].c;
+        edge[id].c = 0;
+        edge[id ^ 1].c = 0;
+        return base - ISAP::max_flow(t, s);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+\texttt{feasible()} 判无源汇可行流；有源汇用 \texttt{max\_flow(s, t)} / \texttt{min\_flow(s, t)}，无解返回 -1。\texttt{init(n)} 会多开两个点给超级源汇。
+\end{warnbox}
+
+\section{全局最小割（Stoer-Wagner）}
+\entrymeta{$O(n^3)$}
+无向图、边权非负，\(O(n^3)\)，适合 \(n \le 600\) 的稠密图。\texttt{add\_edge} 的重边会累加；图不连通时结果是 0；\(n \le 1\) 没有割，返回 \texttt{INF}。做法是每轮把''最后被选中的点 t''合并进''前一个被选中的点 s''，该轮的割值就是 t 的权值和，所有轮取最小。
+
+
+\begin{codeline}
+const int64 INF = 0x3f3f3f3f3f3f3f3f;
+
+class StoerWagner {
+public:
+    vector<vector<int64>> g;
+    vector<int64> w;
+    vector<bool> vis;
+    vector<bool> del;
+    int n = 0;
+
+    /*
+     * 初始化 n 个点的空图
+     */
+    void init(int n_) {
+        n = n_;
+        g.assign(n + 1, vector<int64>(n + 1, 0));
+        w.assign(n + 1, 0);
+        vis.assign(n + 1, false);
+        del.assign(n + 1, false);
+    }
+
+    /*
+     * 添加无向边，重边累加
+     */
+    void add_edge(int u, int v, int64 c) {
+        g[u][v] += c;
+        g[v][u] += c;
+    }
+
+    /*
+     * 全局最小割：每轮把最后选中的点 t 合并进前一个点 s
+     */
+    int64 min_cut() {
+        int64 ans = INF;
+        for(int i = 1; i < n; i++) {
+            fill(w.begin(), w.end(), 0);
+            fill(vis.begin(), vis.end(), false);
+            int s = 0;
+            int t = 0;
+            for(int j = 1; j <= n - i + 1; j++) {
+                t = 0;
+                for(int u = 1; u <= n; u++) {
+                    if(!del[u] && !vis[u] && (t == 0 || w[u] > w[t])) {
+                        t = u;
+                    }
+                }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+                if(j == n - i + 1) {
+                    ans = min(ans, w[t]);
+                    for(int u = 1; u <= n; u++) {
+                        if(!del[u]) {
+                            g[s][u] += g[t][u];
+                            g[u][s] = g[s][u];
+                        }
+                    }
+                    del[t] = true;
+                } else {
+                    s = t;
+                    vis[t] = true;
+                    for(int u = 1; u <= n; u++) {
+                        if(!del[u] && !vis[u]) {
+                            w[u] += g[t][u];
+                        }
+                    }
+                }
+            }
+            if(ans == 0) {
+                return 0;
+            }
+        }
+        return ans;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+无向图、边权非负；重边累加，图不连通返回 0，$n \le 1$ 没有割、返回 \texttt{INF}。
+\end{warnbox}
+
 
 \chapter{连通性}
 
 \section{割点}
 \entrymeta{$O(n+m)$}
+Tarjan 边跑边标记：\texttt{node{[}u{]}.isCut} 就是 u 是否为割点，不需要额外数组。根结点没有父结点，\texttt{fa\ ==\ 0} 时不能用 \texttt{low} 判，改看儿子数是否 ≥ 2。图不保证连通，\texttt{build()} 对每个未访问点各开一棵 DFS 树。
+
 \subsection{P3388 【模板】割点（割顶）}\label{p3388-ux6a21ux677fux5272ux70b9ux5272ux9876}
 
 
 \begin{codeline}
-#define N 20005
-int n, m;
-vector<int> oe[N];
-bool visited[N];
-bool isCutVertex[N];
-int dfn[N];
-int low[N];
-int cnt = 0;
+const int N = 20005;
+
 /*
- * 维护dfn、low并标记割点，fa为DFS树父节点
+ * 原图结点：邻接表与 Tarjan 需要的信息
  */
-void tarjan(int idx, int fa) {
-    cnt++;
-    visited[idx] = true;
-    low[idx] = dfn[idx] = cnt;
+class Node {
+public:
+    vector<int> oe;
+    int dfn = 0;
+    int low = 0;
+    bool isCut = false;   // 是否为割点
+};
+
+Node node[N];
+int n = 0;
+int dfncnt = 0;
+
+/*
+ * 从 u 出发跑 Tarjan 并标记割点，fa 为 DFS 树上的父结点，0 表示根
+ */
+void tarjan(int u, int fa) {
+    node[u].dfn = node[u].low = ++dfncnt;
     int child = 0;
-    for(int e : oe[idx]) {
-        if(!visited[e]) {
+    for(int v : node[u].oe) {
+        if(!node[v].dfn) {
             child++;
-            tarjan(e, idx);
-            low[idx] = min(low[idx], low[e]);
-            if(fa != 0 && low[e] >= dfn[idx]) {
-                isCutVertex[idx] = true;
+            tarjan(v, u);
+            node[u].low = min(node[u].low, node[v].low);
+            if(fa != 0 && node[v].low >= node[u].dfn) {
+                node[u].isCut = true;
             }
-        } else if(e != fa) {
-            low[idx] = min(low[idx], dfn[e]);
+        } else if(v != fa) {
+            node[u].low = min(node[u].low, node[v].dfn);
         }
     }
     if(fa == 0 && child >= 2) {
-        isCutVertex[idx] = true;
+        node[u].isCut = true;
     }
 }
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    cin >> n >> m;
-    int u, v;
-    while(m-- > 0) {
-        cin >> u >> v;
-        oe[u].push_back(v);
-        oe[v].push_back(u);
-    }
 
-    for(int i = 1; i <= n; i++) {
-        if(!visited[i]) {
-            tarjan(i, 0);
+/*
+ * 图不一定连通，每个未访问的点都要开一棵 DFS 树
+ */
+void build() {
+    for(int u = 1; u <= n; u++) {
+        if(!node[u].dfn) {
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=47]
-        }
-    }
-
-    int res = 0;
-    for(int i = 1; i <= n; i++) {
-        res += isCutVertex[i];
-    }
-    cout << (res) << '\n';
-
-    for(int i = 1; i <= n; i++) {
-        if(isCutVertex[i]) {
-            cout << (i) << ' ';
+            tarjan(u, 0);
         }
     }
 }
 \end{codeline}
 \begin{warnbox}
-\texttt{low[v] \textgreater{}= dfn[u]} 判割点；根需单独统计儿子数。
+\texttt{node[v].low \textgreater{}= node[u].dfn} 判割点，根结点靠 \texttt{child \textgreater{}= 2} 单独判定；图不连通时对每个未访问点各跑一次。
+\end{warnbox}
+
+\section{点双连通分量}
+\entrymeta{$O(n+m)$}
+点双用点栈：每遇到一个未访问的儿子 v，回溯后若 \texttt{low{[}v{]}\ \textgreater{}=\ dfn{[}u{]}}，就从栈里弹到 v，再把 u 补进同一块------所以割点会同时出现在它连着的每一块里。\texttt{comp{[}k{]}} 是一块包含的点，\texttt{node{[}u{]}.isCut} 顺手标出割点。只有一条边的两点、以及孤立点，各自算一块。自环不影响双连通性，\texttt{add\_edge} 里直接丢掉------不丢的话它既不是树边、又让孤立点判断失效，这个点一块都没有。
+
+
+\begin{codeline}
+const int N = 20005;
+
+/*
+ * 无向边：两个方向各占一个编号
+ */
+class Edge {
+public:
+    int v;
+    int id;   // 反向边的编号为 id ^ 1
+};
+
+/*
+ * 原图结点：邻接表与 Tarjan 需要的信息
+ */
+class Node {
+public:
+    vector<Edge> oe;
+    int dfn = 0;
+    int low = 0;
+    bool isCut = false;   // 是否为割点
+};
+
+Node node[N];
+vector<int> st;
+vector<vector<int>> comp;   // 每个点双连通分量包含的点
+int n = 0;
+int dfncnt = 0;
+int ecnt = 0;
+int root = 0;
+
+void add_edge(int u, int v) {
+    if(u == v) { // 去自环孤立点
+        return;
+    }
+    node[u].oe.push_back({v, ecnt++});
+    node[v].oe.push_back({u, ecnt++});
+}
+
+/*
+ * 从 u 出发跑 Tarjan，iid 为进入 u 的那条边的编号，-1 表示根
+ * 边回溯时弹栈，弹出的点连同 u 就是一块
+ */
+void tarjan(int u, int iid) {
+    node[u].dfn = node[u].low = ++dfncnt;
+    st.push_back(u);
+
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+    if(u == root && node[u].oe.empty()) {
+        st.pop_back();
+        comp.push_back({u});
+        return;
+    }
+
+    int child = 0;
+    for(Edge& e : node[u].oe) {
+        if(e.id == iid) {
+            continue;
+        }
+        if(!node[e.v].dfn) {
+            child++;
+            tarjan(e.v, e.id ^ 1);
+            node[u].low = min(node[u].low, node[e.v].low);
+            if(node[e.v].low >= node[u].dfn) {
+                if(u != root || child > 1) {
+                    node[u].isCut = true;
+                }
+                vector<int> c;
+                while(true) {
+                    int v = st.back();
+                    st.pop_back();
+                    c.push_back(v);
+                    if(v == e.v) {
+                        break;
+                    }
+                }
+                c.push_back(u);
+                comp.push_back(c);
+            }
+        } else {
+            node[u].low = min(node[u].low, node[e.v].dfn);
+        }
+    }
+}
+
+/*
+ * 图不一定连通，每个未访问的点都要开一棵 DFS 树
+ */
+void build() {
+    for(int u = 1; u <= n; u++) {
+        if(!node[u].dfn) {
+            root = u;
+            tarjan(u, -1);
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+    }
+}
+\end{codeline}
+\begin{warnbox}
+\texttt{low[v] \textgreater{}= dfn[u]} 时弹栈到 v，再把 u 补进同一块，割点因此属于多块；孤立点自成一块；自环在 \texttt{add\_edge} 里直接丢掉，否则那个点一块都没有。
+\end{warnbox}
+
+\section{割边}
+\entrymeta{$O(n+m)$}
+无向图判桥必须按边的编号跳过父边：只按父结点 \texttt{v\ !=\ fa} 跳的话，两点之间并排的两条边会被误判成桥。\texttt{add\_edge} 让一条无向边的两个方向占一对编号（\texttt{id} 与 \texttt{id\ \^{}\ 1}），\texttt{node{[}v{]}.isBridge} 表示 v 到父结点的那条树边是桥。图不保证连通，\texttt{build()} 对每个未访问点各开一棵 DFS 树。
+
+
+\begin{codeline}
+const int N = 20005;
+
+/*
+ * 无向边：两个方向各占一个编号
+ */
+class Edge {
+public:
+    int v;
+    int id;   // 反向边的编号为 id ^ 1
+};
+
+/*
+ * 原图结点：邻接表与 Tarjan 需要的信息
+ */
+class Node {
+public:
+    vector<Edge> oe;
+    int dfn = 0;
+    int low = 0;
+    bool isBridge = false;   // 到父结点的树边是桥
+};
+
+Node node[N];
+int n = 0;
+int dfncnt = 0;
+int edgecnt = 0;
+
+void add_edge(int u, int v) {
+    node[u].oe.push_back({v, edgecnt++});
+    node[v].oe.push_back({u, edgecnt++});
+}
+
+/*
+ * 从 u 出发跑 Tarjan 并标记桥，inId 为进入 u 的那条边的编号，-1 表示根
+ */
+void tarjan(int u, int inId) {
+    node[u].dfn = node[u].low = ++dfncnt;
+    for(Edge& e : node[u].oe) {
+        if(e.id == inId) {
+            continue;
+        }
+        if(!node[e.v].dfn) {
+            tarjan(e.v, e.id ^ 1);
+            node[u].low = min(node[u].low, node[e.v].low);
+            if(node[e.v].low > node[u].dfn) {
+                node[e.v].isBridge = true;
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            }
+        } else {
+            node[u].low = min(node[u].low, node[e.v].dfn);
+        }
+    }
+}
+
+/*
+ * 图不一定连通，每个未访问的点都要开一棵 DFS 树
+ */
+void build() {
+    for(int u = 1; u <= n; u++) {
+        if(!node[u].dfn) {
+            tarjan(u, -1);
+        }
+    }
+}
+\end{codeline}
+\begin{warnbox}
+\texttt{node[v].low \textgreater{} node[u].dfn} 判桥；必须按边编号跳过父边（\texttt{id \textasciicircum{} 1}），否则重边会被误判成桥。
+\end{warnbox}
+
+\section{边双连通分量}
+\entrymeta{$O(n+m)$}
+边双就是删掉所有桥之后剩下的连通块，这里用栈版 Tarjan 一次到底：在无向图上按 SCC 的写法弹栈，只是跳过父边的反向边。\texttt{node{[}u{]}.color} 存所在边双的代表点，\texttt{node{[}u{]}.color\ ==\ u} 说明 u 是代表点，不需要另外的映射表。自环不影响双连通性，读入时丢掉。
+
+
+\begin{codeline}
+const int N = 20005;
+
+/*
+ * 无向边：两个方向各占一个编号
+ */
+class Edge {
+public:
+    int v;
+    int id;   // 反向边的编号为 id ^ 1
+};
+
+/*
+ * 原图结点：邻接表与 Tarjan 需要的信息
+ */
+class Node {
+public:
+    vector<Edge> oe;
+    int dfn = 0;
+    int low = 0;
+    int color = -1;   // 所在边双的代表点
+    bool inStack = false;
+};
+
+Node node[N];
+vector<int> st;
+int n = 0;
+int dfncnt = 0;
+int ecnt = 0;
+
+void add_edge(int u, int v) {
+    node[u].oe.push_back({v, ecnt++});
+    node[v].oe.push_back({u, ecnt++});
+}
+
+/*
+ * 从 u 出发跑 Tarjan，iid 为进入 u 的那条边的编号，-1 表示根
+ * 弹栈时把整块边双的 color 都记成代表点 u
+ */
+void tarjan2(int u, int iid) {
+    node[u].dfn = node[u].low = ++dfncnt;
+    st.push_back(u);
+    node[u].inStack = true;
+    for(Edge& e : node[u].oe) {
+        if(e.id == iid) {
+            continue;
+        }
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        if(!node[e.v].dfn) {
+            tarjan2(e.v, e.id ^ 1);
+            node[u].low = min(node[u].low, node[e.v].low);
+        } else if(node[e.v].inStack) {
+            node[u].low = min(node[u].low, node[e.v].dfn);
+        }
+    }
+
+    if(node[u].low == node[u].dfn) {
+        while(true) {
+            int v = st.back();
+            st.pop_back();
+            node[v].inStack = false;
+            node[v].color = u;
+            if(v == u) {
+                break;
+            }
+        }
+    }
+}
+
+/*
+ * 图不一定连通，每个未访问的点都要开一棵 DFS 树
+ */
+void build() {
+    for(int u = 1; u <= n; u++) {
+        if(!node[u].dfn) {
+            tarjan2(u, -1);
+        }
+    }
+}
+\end{codeline}
+\begin{warnbox}
+边双就是删掉所有桥后的连通块；本模板用栈版 Tarjan 一次到底，\texttt{node[u].color == u} 是代表点。
 \end{warnbox}
 
 \section{缩点}
 \entrymeta{$O(n+m)$}
-\subsection{P3387 【模板】缩点}\label{p3387-ux6a21ux677fux7f29ux70b9}
+Tarjan 只做染色：\texttt{node{[}u{]}.color} 存所在分量的代表点，\texttt{node{[}u{]}.color\ ==\ u} 说明 u 是代表点，不需要额外维护原结点到缩点后结点的映射。需要 DAG 时调用 \texttt{condense()}，\texttt{comp{[}u{]}.oe} 就是代表点 u 所在分量的出边表；分量上的其它信息自己往 \texttt{Component} 里加字段。
 
 
 \begin{codeline}
 const int N = 10005;
 
-class SCCNode {
-public:
-    vector<int> oe;
-    int dfn, low;
-    int color;
-    int ie;
-    int w;
-    bool inStack;
-};
-
-vector<int> st;
-
+/*
+ * 原图结点：邻接表与 Tarjan 需要的信息
+ */
 class Node {
 public:
     vector<int> oe;
-    int sum;
-    int ie;
-    int dp;
+    int dfn = 0;
+    int low = 0;
+    int color = -1;   // 所在分量的代表点
+    bool inStack = false;
 };
 
-SCCNode scc[N];
-Node node[N];
-int dfncnt = 1;
+/*
+ * 缩点后的结点：以代表点为下标，存 DAG 上的出边
+ */
+class Component {
+public:
+    vector<int> oe;
+};
 
-int n, m;
+Node node[N];
+Component comp[N];
+vector<int> st;
+int n = 0;
+int dfncnt = 0;
 
 /*
- * 求u可达部分的强连通分量并记录分量编号
+ * 从 u 出发跑 Tarjan，弹栈时把整块分量的 color 都记成代表点 u
  */
 void tarjan(int u) {
-    scc[u].dfn = scc[u].low = dfncnt++;
-    scc[u].color = u;
+    node[u].dfn = node[u].low = ++dfncnt;
     st.push_back(u);
-    scc[u].inStack = true;
-    for(int v : scc[u].oe) {
-        if(!scc[v].dfn) {
+    node[u].inStack = true;
+    for(int v : node[u].oe) {
+        if(!node[v].dfn) {
             tarjan(v);
-        }
-        if(scc[v].low < scc[u].low && scc[v].inStack) {
-            scc[u].low = scc[v].low;
+            node[u].low = min(node[u].low, node[v].low);
+        } else if(node[v].inStack) {
+            node[u].low = min(node[u].low, node[v].dfn);
         }
     }
 
-    if(scc[u].low == scc[u].dfn) {
+    if(node[u].low == node[u].dfn) {
+        while(true) {
 \end{codeline}
 \vspace{-0.9\baselineskip}
 \begin{codeline}[firstnumber=47]
-        int v = st.back();
-        while(v != u) {
-            scc[v].color = u;
+            int v = st.back();
             st.pop_back();
-            scc[v].inStack = false;
-            v = st.back();
+            node[v].inStack = false;
+            node[v].color = u;
+            if(v == u) {
+                break;
+            }
         }
-        st.pop_back();
-        scc[u].inStack = false;
     }
 }
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    cin >> n >> m;
-    for(int i = 1; i <= n; i++) {
-        cin >> scc[i].w;
+/*
+ * 对 1 到 n 的每个点求强连通分量
+ */
+void build() {
+    for(int u = 1; u <= n; u++) {
+        if(!node[u].dfn) {
+            tarjan(u);
+        }
     }
+}
 
-    int u, v;
-    for(int i = 1; i <= m; i++) {
-        cin >> u >> v;
-        scc[u].oe.push_back(v);
-        scc[v].ie++;
-    }
-
-    for(int i = 1; i <= n; i++) {
-        scc[0].oe.push_back(i);
-    }
-
-    tarjan(0);
-
-    for(u = 1; u <= n; u++) {
-        int nu = scc[u].color;
-        node[nu].sum += scc[u].w;
-        for(int e : scc[u].oe) {
-            v = e;
-            int nv = scc[v].color;
-            if(nu != nv) {
-                node[nu].oe.push_back(nv);
-                node[nv].ie++;
+/*
+ * 缩点：跨分量的边收进代表点的出边表
+ */
+void condense() {
+    for(int u = 1; u <= n; u++) {
+        int cu = node[u].color;
+        for(int v : node[u].oe) {
+            int cv = node[v].color;
+            if(cu != cv) {
+                comp[cu].oe.push_back(cv);
             }
         }
     }
-
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=93]
-    queue<int> q;
-    for(u = 1; u <= n; u++) {
-        if(!node[u].ie) {
-            q.push(u);
-        }
-    }
-
-    int ans = 0;
-    while(!q.empty()) {
-        u = q.front();
-        q.pop();
-        node[u].dp += node[u].sum;
-        ans = max(ans, node[u].dp);
-        for(int e : node[u].oe) {
-            v = e;
-            node[v].dp = max(node[v].dp, node[u].dp);
-            node[v].ie--;
-            if(!node[v].ie) {
-                q.push(v);
-            }
-        }
-    }
-
-    cout << (ans);
 }
 \end{codeline}
 \begin{warnbox}
-Tarjan 后按 SCC 编号建 DAG；重复边要去重。
+\texttt{node[u].color == u} 说明 u 是分量代表点；\texttt{color != u} 的点必然落在大小 ≥ 2 的分量里。\texttt{condense()} 只负责建 DAG，要不要用看题目。
 \end{warnbox}
 
 

@@ -788,8 +788,8 @@ struct BigInt {
 压位宽度与进位处理要一致。
 \end{warnbox}
 
-\section{Johnson 算法}
-\entrymeta{$O(nm\log m)$}
+\section{加工生产调度（Johnson 规则）}
+\entrymeta{$O(n\log n)$}
 \subsection{P1248 加工生产调度}\label{p1248-ux52a0ux5de5ux751fux4ea7ux8c03ux5ea6}
 
 
@@ -845,7 +845,7 @@ int main() {
 }
 \end{codeline}
 \begin{warnbox}
-先 SPFA 求势能；还原距离时减去势能差。
+两台机器的作业排序：a < b 的用头指针从前往后填，否则用尾指针从后往前填。这是排序规则，与全源最短路的 Johnson 无关。
 \end{warnbox}
 
 
@@ -2956,27 +2956,27 @@ int main() {
 \clearpage
 \subsection*{延伸阅读}
 \begin{center}
-\includegraphics[page=1,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_073.pdf}
+\includegraphics[page=1,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_079.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=2,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_073.pdf}
+\includegraphics[page=2,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_079.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=3,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_073.pdf}
+\includegraphics[page=3,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_079.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=4,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_073.pdf}
+\includegraphics[page=4,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_079.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=5,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_073.pdf}
+\includegraphics[page=5,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_079.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=6,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_073.pdf}
+\includegraphics[page=6,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_079.pdf}
 \end{center}
 \clearpage
 
