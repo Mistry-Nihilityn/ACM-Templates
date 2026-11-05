@@ -54,7 +54,7 @@ public:
 
 \section{杜教筛}
 \entrymeta{$O(n^{2/3})$}
-\begin{center}\includegraphics[width=0.78\linewidth]{assets/e047_image-1.png}\end{center}
+\begin{center}\includegraphics[width=0.78\linewidth]{assets/e049_image-1.png}\end{center}
 
 
 \begin{codeline}
@@ -147,39 +147,39 @@ int main() {
 \clearpage
 \subsection*{延伸阅读}
 \begin{center}
-\includegraphics[page=1,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=1,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=2,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=2,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=3,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=3,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=4,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=4,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=5,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=5,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=6,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=6,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=7,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=7,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=8,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=8,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 \begin{center}
-\includegraphics[page=9,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_047.pdf}
+\includegraphics[page=9,width=0.94\linewidth,height=0.90\textheight,keepaspectratio]{assets/pdf/pdf_049.pdf}
 \end{center}
 \clearpage
 
@@ -647,148 +647,6 @@ int main() {
 本文件实际是斐波那契同余的逐位提升，不是 BSGS。
 \end{warnbox}
 
-\section{2-SAT}
-\entrymeta{$O(n+m)$}
-\begin{codeline}
-class TwoSAT {
-public:
-    int n = 0;
-    int dfncnt = 0;
-    vector<vector<int>> oe;
-    vector<int> dfn, low, color;
-    vector<bool> inStack;
-    vector<int> st;
-    vector<int> state;
-
-    /*
-     * 初始化 n 个布尔变量，编号 1..n
-     */
-    void init(int n_) {
-        n = n_;
-        dfncnt = 0;
-        oe.assign(2 * n + 1, {});
-        dfn.assign(2 * n + 1, 0);
-        low.assign(2 * n + 1, 0);
-        color.assign(2 * n + 1, 0);
-        inStack.assign(2 * n + 1, false);
-        state.assign(n + 1, 0);
-        st.clear();
-    }
-
-    /*
-     * 变量 x 取 val 时对应的节点，val=0 表示假
-     */
-    int id(int x, int val) const {
-        return x + val * n;
-    }
-
-    /*
-     * 加入条件 (x=a) 或 (y=b)，a、b 取 0/1
-     */
-    void addOr(int x, int a, int y, int b) {
-        oe[id(x, a ^ 1)].push_back(id(y, b));
-        oe[id(y, b ^ 1)].push_back(id(x, a));
-    }
-
-    /*
-     * 加入条件 x=a；a=0 即「非 x」。与条件连续调用即可
-     */
-    void addUnit(int x, int a) {
-        oe[id(x, a ^ 1)].push_back(id(x, a));
-    }
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=47]
-
-    /*
-     * 从 u 出发求强连通分量。递归深度为图上最长链，
-     * 满约束下需要显式放大栈空间，见正文说明。
-     */
-    void tarjan(int u) {
-        dfn[u] = ++dfncnt;
-        low[u] = dfn[u];
-        color[u] = u;
-        st.push_back(u);
-        inStack[u] = true;
-        for(int v : oe[u]) {
-            if(!dfn[v]) {
-                tarjan(v);
-            }
-            if(inStack[v] && low[v] < low[u]) {
-                low[u] = low[v];
-            }
-        }
-        if(low[u] == dfn[u]) {
-            while(st.back() != u) {
-                int v = st.back();
-                st.pop_back();
-                color[v] = u;
-                inStack[v] = false;
-            }
-            st.pop_back();
-            inStack[u] = false;
-        }
-    }
-
-    /*
-     * 求解；无解返回 false，有解时 state[1..n] 为各变量取值
-     */
-    bool solve() {
-        for(int u = 1; u <= 2 * n; u++) {
-            if(!dfn[u]) {
-                tarjan(u);
-            }
-        }
-        vector<vector<int>> goe(2 * n + 1);
-        vector<int> indeg(2 * n + 1, 0);
-        for(int u = 1; u <= 2 * n; u++) {
-            for(int v : oe[u]) {
-                if(color[u] != color[v]) {
-                    goe[color[u]].push_back(color[v]);
-\end{codeline}
-\vspace{-0.9\baselineskip}
-\begin{codeline}[firstnumber=93]
-                    indeg[color[v]]++;
-                }
-            }
-        }
-        queue<int> q;
-        for(int u = 1; u <= 2 * n; u++) {
-            if(color[u] == u && indeg[u] == 0) {
-                q.push(u);
-            }
-        }
-        vector<int> tpn(2 * n + 1, 0);
-        int cnt = 0;
-        while(!q.empty()) {
-            int u = q.front();
-            q.pop();
-            tpn[u] = ++cnt;
-            for(int v : goe[u]) {
-                indeg[v]--;
-                if(indeg[v] == 0) {
-                    q.push(v);
-                }
-            }
-        }
-        for(int x = 1; x <= n; x++) {
-            if(color[id(x, 0)] == color[id(x, 1)]) {
-                return false;
-            }
-            if(tpn[color[id(x, 1)]] > tpn[color[id(x, 0)]]) {
-                state[x] = 1;
-            } else {
-                state[x] = 0;
-            }
-        }
-        return true;
-    }
-};
-\end{codeline}
-\begin{warnbox}
-Tarjan 递归深度可达 2n；满约束需开大栈或换非递归版。
-\end{warnbox}
-
 
 \chapter{代数}
 
@@ -1052,7 +910,7 @@ int main() {
 
 \subsection{图片题例：可回退线性基}\label{ux56feux7247ux9898ux4f8bux53efux56deux9000ux7ebfux6027ux57fa}
 
-\begin{center}\includegraphics[width=0.78\linewidth]{assets/e056_image-4.png}\end{center}
+\begin{center}\includegraphics[width=0.78\linewidth]{assets/e057_image-4.png}\end{center}
 
 
 \begin{codeline}

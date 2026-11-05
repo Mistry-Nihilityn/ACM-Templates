@@ -3260,7 +3260,7 @@ void build() {
 
 \section{缩点}
 \entrymeta{$O(n+m)$}
-Tarjan 只做染色：\texttt{node{[}u{]}.color} 存所在分量的代表点，\texttt{node{[}u{]}.color\ ==\ u} 说明 u 是代表点，不需要额外维护原结点到缩点后结点的映射。需要 DAG 时调用 \texttt{condense()}，\texttt{comp{[}u{]}.oe} 就是代表点 u 所在分量的出边表；分量上的其它信息自己往 \texttt{Component} 里加字段。
+Tarjan 只做染色：\texttt{node{[}u{]}.color} 存所在分量的代表点，\texttt{node{[}u{]}.color\ ==\ u} 说明 u 是代表点，不需要额外维护原结点到缩点后结点的映射。需要 DAG 时调用 \texttt{condense()}，\texttt{cnode{[}u{]}.oe} 就是代表点 u 所在分量的出边表；分量上的其它信息自己往 \texttt{CNode} 里加字段。
 
 
 \begin{codeline}
@@ -3281,13 +3281,13 @@ public:
 /*
  * 缩点后的结点：以代表点为下标，存 DAG 上的出边
  */
-class Component {
+class CNode {
 public:
     vector<int> oe;
 };
 
 Node node[N];
-Component comp[N];
+CNode cnode[N];
 vector<int> st;
 int n = 0;
 int dfncnt = 0;
@@ -3344,7 +3344,7 @@ void condense() {
         for(int v : node[u].oe) {
             int cv = node[v].color;
             if(cu != cv) {
-                comp[cu].oe.push_back(cv);
+                cnode[cu].oe.push_back(cv);
             }
         }
     }
@@ -3352,6 +3352,249 @@ void condense() {
 \end{codeline}
 \begin{warnbox}
 \texttt{node[u].color == u} 说明 u 是分量代表点；\texttt{color != u} 的点必然落在大小 ≥ 2 的分量里。\texttt{condense()} 只负责建 DAG，要不要用看题目。
+\end{warnbox}
+
+\section{2-SAT}
+\entrymeta{$O(n+m)$}
+三个求解接口，按需要选一个：
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{solve()}：Tarjan 弹栈顺序天然是逆拓扑序，弹栈编号小的分量在拓扑序里靠后，直接比 \texttt{color{[}id(x,1){]}\ \textless{}\ color{[}id(x,0){]}} 就知道该不该取真。不建 DAG，最快。
+\item
+  \texttt{solveKahn()}：和 \texttt{solve()} 等价，但把缩点后的 DAG 建出来跑 Kahn 求拓扑序再比较。多一次 \(O(n+m)\) 的建图和排队，解可能和 \texttt{solve()} 不同（都合法）。
+\item
+  \texttt{solveLex()}：字典序最小的解，按变量顺序贪心，能取 0 就取 0，冲突再取 1，每次尝试沿蕴含边传播、失败回滚。\(O(n(n+m))\)，只适合小规模。
+\end{itemize}
+
+
+\begin{codeline}
+class TwoSAT {
+public:
+    int n = 0;
+    int dfncnt = 0;
+    int scccnt = 0;
+    vector<vector<int>> oe;
+    vector<int> dfn, low, color;
+    vector<bool> inStack;
+    vector<int> st;
+    vector<int> state;
+
+    /*
+     * 初始化 n 个布尔变量，编号 1..n
+     */
+    void init(int n_) {
+        n = n_;
+        dfncnt = 0;
+        scccnt = 0;
+        oe.assign(2 * n + 1, {});
+        dfn.assign(2 * n + 1, 0);
+        low.assign(2 * n + 1, 0);
+        color.assign(2 * n + 1, 0);
+        inStack.assign(2 * n + 1, false);
+        state.assign(n + 1, 0);
+        st.clear();
+    }
+
+    /*
+     * 变量 x 取 val 时对应的节点，val=0 表示假
+     */
+    int id(int x, int val) const {
+        return x + val * n;
+    }
+
+    /*
+     * 加入条件 (x=a) 或 (y=b)，a、b 取 0/1
+     */
+    void addOr(int x, int a, int y, int b) {
+        oe[id(x, a ^ 1)].push_back(id(y, b));
+        oe[id(y, b ^ 1)].push_back(id(x, a));
+    }
+
+    /*
+     * 加入条件 x=a；a=0 即「非 x」。与条件连续调用即可
+     */
+    void addUnit(int x, int a) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+        oe[id(x, a ^ 1)].push_back(id(x, a));
+    }
+
+    /*
+     * 加入条件 (x=a) -> (y=b)
+     */
+    void addImp(int x, int a, int y, int b) {
+        addOr(x, a ^ 1, y, b);
+    }
+
+    /*
+     * 从 u 出发求强连通分量，弹栈时按完成顺序编号
+     * 递归深度为图上最长链，满约束下需要显式放大栈空间
+     */
+    void tarjan(int u) {
+        dfn[u] = ++dfncnt;
+        low[u] = dfn[u];
+        st.push_back(u);
+        inStack[u] = true;
+        for(int v : oe[u]) {
+            if(!dfn[v]) {
+                tarjan(v);
+            }
+            if(inStack[v] && low[v] < low[u]) {
+                low[u] = low[v];
+            }
+        }
+        if(low[u] == dfn[u]) {
+            while(true) {
+                int v = st.back();
+                st.pop_back();
+                inStack[v] = false;
+                color[v] = scccnt;
+                if(v == u) {
+                    break;
+                }
+            }
+            scccnt++;
+        }
+    }
+
+    /*
+     * 求解；无解返回 false，有解时 state[1..n] 为各变量取值
+     * 弹栈编号小 = 拓扑序靠后 = 该分量取真
+     */
+    bool solve() {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+        for(int u = 1; u <= 2 * n; u++) {
+            if(!dfn[u]) {
+                tarjan(u);
+            }
+        }
+        for(int x = 1; x <= n; x++) {
+            if(color[id(x, 0)] == color[id(x, 1)]) {
+                return false;
+            }
+            state[x] = color[id(x, 1)] < color[id(x, 0)];
+        }
+        return true;
+    }
+
+    /*
+     * 同上，但建出缩点后的 DAG 跑 Kahn 求拓扑序再比较
+     */
+    bool solveKahn() {
+        for(int u = 1; u <= 2 * n; u++) {
+            if(!dfn[u]) {
+                tarjan(u);
+            }
+        }
+        vector<vector<int>> goe(scccnt);
+        vector<int> indeg(scccnt, 0);
+        for(int u = 1; u <= 2 * n; u++) {
+            for(int v : oe[u]) {
+                if(color[u] != color[v]) {
+                    goe[color[u]].push_back(color[v]);
+                    indeg[color[v]]++;
+                }
+            }
+        }
+        queue<int> q;
+        for(int c = 0; c < scccnt; c++) {
+            if(indeg[c] == 0) {
+                q.push(c);
+            }
+        }
+        vector<int> tpn(scccnt, 0);
+        int cnt = 0;
+        while(!q.empty()) {
+            int c = q.front();
+            q.pop();
+            tpn[c] = ++cnt;
+            for(int d : goe[c]) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=139]
+                if(--indeg[d] == 0) {
+                    q.push(d);
+                }
+            }
+        }
+        for(int x = 1; x <= n; x++) {
+            if(color[id(x, 0)] == color[id(x, 1)]) {
+                return false;
+            }
+            state[x] = tpn[color[id(x, 1)]] > tpn[color[id(x, 0)]];
+        }
+        return true;
+    }
+
+    /*
+     * 字面量 u 的否定
+     */
+    int neg(int u) const {
+        return u > n ? u - n : u + n;
+    }
+
+    /*
+     * 令 (x=a) 为真并沿蕴含边传播，失败则撤销本次所有赋值
+     */
+    bool assign(int x, int a, vector<int>& val) {
+        vector<int> rec;
+        if(val[id(x, a)] == 1) {
+            return true;
+        }
+        auto push = [&](int u) -> bool {
+            if(val[neg(u)] == 1) {
+                return false;
+            }
+            if(val[u] == 1) {
+                return true;
+            }
+            val[u] = 1;
+            rec.push_back(u);
+            return true;
+        };
+        if(!push(id(x, a))) {
+            return false;
+        }
+        for(int i = 0; i < int(rec.size()); i++) {
+            for(int v : oe[rec[i]]) {
+                if(!push(v)) {
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=185]
+                    for(int w : rec) {
+                        val[w] = -1;
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /*
+     * 字典序最小的解：按变量顺序，能取 0 就取 0，冲突再取 1
+     */
+    bool solveLex() {
+        vector<int> val(2 * n + 1, -1);
+        for(int x = 1; x <= n; x++) {
+            if(!assign(x, 0, val) && !assign(x, 1, val)) {
+                return false;
+            }
+        }
+        for(int x = 1; x <= n; x++) {
+            state[x] = val[id(x, 1)] == 1 ? 1 : 0;
+        }
+        return true;
+    }
+};
+\end{codeline}
+\begin{warnbox}
+Tarjan 递归深度可达 2n；满约束需开大栈或换非递归版。
 \end{warnbox}
 
 
@@ -3801,5 +4044,136 @@ int main() {
 \end{codeline}
 \begin{warnbox}
 先子集 DP，再对每个状态跑最短路。
+\end{warnbox}
+
+\section{线段树优化建图}
+\entrymeta{$O(n + k\log n)$ 建图}
+把 \texttt{u} 连向整个区间、整个区间连向 \texttt{u} 这种 \(O(n)\) 条边的建图压成 \(O(\log n)\)，用两棵共用 \texttt{1..n} 真实点当叶子的线段树：
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{出树}（父连子，叶子连到真实点）：\texttt{to(u,\ l,\ r)} 从 u 连到覆盖区间的几个出树结点，就能走到区间里的每个点。
+\item
+  \textbf{入树}（子连父，真实点连到叶子）：\texttt{from(l,\ r,\ u)} 让区间里的点先爬到覆盖结点，再连到 u。
+\item
+  \texttt{add(u,\ v)} 用来连普通的单条边。
+\end{itemize}
+
+两棵树是\textbf{第一次用到才建}的：只用 \texttt{to} 或只用 \texttt{from} 时总点数 \texttt{5n}，两个方向都用才 \texttt{9n}，什么都不用时就是 \texttt{n}。真实点固定占 \texttt{1..n}，树结点码在后面，偏移存在 \texttt{ob} / \texttt{ib} 里，所以\textbf{不要写死} \texttt{n\ +\ p}、\texttt{5\ *\ n\ +\ p} 这类编号；\texttt{tot} 是当前实际用到的点数，跑最短路或 Tarjan 遍历 \texttt{1..tot} 即可。
+
+\texttt{init} 只开 \texttt{n\ +\ 1} 个点，其余在 \texttt{ensure} 里第一次建树时才 \texttt{resize}；如果 \texttt{Node} 里还挂了别的字段（缩点的 \texttt{dfn\ /\ low\ /\ color} 之类），记得在同一处同步扩容。
+
+\texttt{oe} 里存的是后继编号，不带边权。树边本身也会被算成一步，所以这份只保证\textbf{可达性}（缩点、2-SAT 这类）与题目图一致；要跑最短路得把树边设成 0 权，也就是把 \texttt{oe} 换成带权结构，只在 \texttt{build} 里填 0。
+
+
+\begin{codeline}
+class Graph {
+public:
+    class Node {
+    public:
+        vector<int> oe;
+    };
+    vector<Node> node;
+    int n = 0, tot = 0;
+    int ob = 0, ib = 0;   // 出树、入树基址，0 表示还没建
+
+    void init(int n_) {
+        n = n_;
+        tot = n;
+        ob = ib = 0;
+        node.assign(n + 1, Node());
+    }
+
+    void add(int u, int v) {
+        node[u].oe.push_back(v);
+    }
+
+    /*
+     * 第一次用到某个方向时才建树，dir 为 0 建出树、1 建入树，返回基址
+     * 有其他如缩点后的元素时，此处记得 resize
+     */
+    int ensure(int dir) {
+        int& base = dir ? ib : ob;
+        if(base) {
+            return base;
+        }
+        base = (ob || ib) ? 5 * n : n;
+        node.resize(base + 4 * n + 1);
+        tot = max(tot, base + 4 * n);
+        build(1, 1, n, base, dir);
+        return base;
+    }
+
+    /*
+     * 出树父连子、入树子连父，叶子连到真实点
+     */
+    void build(int p, int l, int r, int base, int dir) {
+        if(l == r) {
+            if(dir) {
+                add(l, base + p);
+            } else {
+                add(base + p, l);
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=47]
+            }
+            return;
+        }
+        int mid = l + (r - l) / 2;
+        if(dir) {
+            add(base + 2 * p, base + p);
+            add(base + 2 * p + 1, base + p);
+        } else {
+            add(base + p, base + 2 * p);
+            add(base + p, base + 2 * p + 1);
+        }
+        build(2 * p, l, mid, base, dir);
+        build(2 * p + 1, mid + 1, r, base, dir);
+    }
+
+    /*
+     * dir 为 0 时 u 连向区间，为 1 时区间连向 u
+     */
+    void walk(int u, int l, int r, int p, int cl, int cr, int dir) {
+        if(l <= cl && cr <= r) {
+            if(dir) {
+                add(ib + p, u);
+            } else {
+                add(u, ob + p);
+            }
+            return;
+        }
+        int mid = cl + (cr - cl) / 2;
+        if(l <= mid) {
+            walk(u, l, r, 2 * p, cl, mid, dir);
+        }
+        if(r > mid) {
+            walk(u, l, r, 2 * p + 1, mid + 1, cr, dir);
+        }
+    }
+
+    /*
+     * u 连向 [l, r] 里的每个点
+     */
+    void to(int u, int l, int r) {
+        ensure(0);
+        walk(u, l, r, 1, 1, n, 0);
+    }
+
+    /*
+     * [l, r] 里的每个点连向 u
+\end{codeline}
+\vspace{-0.9\baselineskip}
+\begin{codeline}[firstnumber=93]
+     */
+    void from(int l, int r, int u) {
+        ensure(1);
+        walk(u, l, r, 1, 1, n, 1);
+    }
+};
+\end{codeline}
+\begin{warnbox}
+两棵树按需建：只用一个方向时总点数 5n，两个方向都用才是 9n；树结点的偏移用 \texttt{ob} / \texttt{ib} 定位，跑最短路或 Tarjan 遍历 \texttt{1..tot}。
 \end{warnbox}
 
